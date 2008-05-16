@@ -1,0 +1,1 @@
+ETL::Engine.process(File.dirname(__FILE__) + '/date_dimension.ctl')

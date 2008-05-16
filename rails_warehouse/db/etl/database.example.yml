@@ -1,0 +1,13 @@
+etl_execution:
+  database: rails_warehouse_etl_execution
+  adapter: mysql
+  hostname: localhost
+  username: root
+  password:
+
+warehouse:
+  adapter: mysql
+  database: rails_warehouse_development
+  username: root
+  password:
+  host: localhost

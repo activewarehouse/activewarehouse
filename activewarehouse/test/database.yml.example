@@ -1,0 +1,13 @@
+etl_execution:
+  adapter: sqlserver
+  database: activewarehouse_unittest_etl
+  host: localhost
+  username: sa
+  password: xxx
+  
+awunit:
+  adapter: sqlserver
+  host: localhost
+  username: sa
+  password: xxx
+  database: activewarehouse_unittest

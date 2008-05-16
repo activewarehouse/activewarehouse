@@ -1,0 +1,2 @@
+module RevisionReportsHelper
+end

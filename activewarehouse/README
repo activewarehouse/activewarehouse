@@ -1,0 +1,99 @@
+== ActiveWarehouse
+
+The ActiveWarehouse library provides classes and functions which help with
+building Data Warehouses using Rails. It can be installed either as a plugin
+or as a Gem.
+
+To install as a plugin just use:
+
+  script/plugin install --force svn://rubyforge.org/var/svn/activewarehouse/activewarehouse/trunk
+  
+To get the latest edge version.
+
+To install as a Gem, use:
+
+  gem install activewarehouse
+
+On *nix you will need to run this command as root or better yet, using sudo.
+
+Next, you will need to freeze or link the Gem to your Rails app. I prefer using
+the gemsonrails project:
+
+  gem install gemsonrails
+
+And then in your Rails app:
+
+  rake gems:link GEM=activewarehouse
+  
+It is possible that freezing the Gem to the Rails app may not work at all times. It is most often best to install as a plugin.
+
+== Generators
+
+ActiveWarehouse comes with several generators
+
+  script/generate fact Sales
+  script/generate fact sales
+ 
+    Creates a SalesFact class and a sales_facts table.
+ 
+  script/generate dimension Region
+  script/generate dimension region
+   
+    Creates a RegionDimension class and a region_dimension table.
+ 
+  script/generate cube RegionalSales
+  script/generate cube regional_sales
+ 
+    Creates a RegionalSalesCube class.
+   
+  script/generate bridge CustomerHierarchy
+  script/generate bridge customer_hierarchy
+   
+    Creates a CustomerHierarchyBridge class.
+   
+  script/generate dimension_view OrderDate Date
+  script/generate dimension_view order_date date
+  
+    Creates an OrderDateDimension class which is represented by a view on top
+    of the DateDimension.
+   
+The rules for naming are as follows:
+
+Facts:
+  Fact classes and tables follow the typical Rails rules: classes are singular
+  and tables are pluralized. 
+  Both the class and table name are suffixed by "_fact".
+Dimensions:
+  Dimension classes and tables are both singular. 
+  Both the class name and the table name are suffixed by "_dimension".
+Cube:
+  Cube class is singular. If a cube table is created it will also be singular.
+Bridge:
+  Bridge classes and tables are both singular.
+  Both the class name and the table name are suffixed by "_bridge".
+Dimension View:
+  Dimension View classes are singular. The underlying data structure is a view
+  on top of an existing dimension.
+  Both the class name and the view name are suffixed by "_dimension"
+  
+== ETL
+
+The ActiveWarehouse plugin does not directly handle Extract-Transform-Load
+processes, however the ActiveWarehouse ETL gem (installed separately) can help.
+To install it use:
+
+  gem install activewarehouse-etl
+
+Once again you should run this command as root or using sudo.
+  
+More information on the ETL process can be found at
+http://activewarehouse.rubyforge.org/etl
+
+== Tutorial
+
+A tutorial for ActiveWarehouse is available online at
+http://anthonyeden.com/2006/12/20/activewarehouse-example-with-rails-svn-logs
+(Note that is is out of date.)
+
+You can also get a demo from the ActiveWarehouse subversion repository. Look in
+the SVN_ROOT/demo directory.

@@ -1,0 +1,3 @@
+store_name,store_number,store_address,store_city,store_county,store_state,store_zip,store_manager,store_region...
+Store 1,Store 1,101 SW 1st Street,Miami,Miami-Dade,Florida,33143,Bob Smith,South Florida,Southeast,FPA,24 Hour,ATM, 10300, 12390, 1, 600
+Store 2,Store 2,11 Broadway,New York,New York,New York,00101,John Smith,New York,Northeast,FPA,24 Hour,ATM, 10300, 12390, 1, 600

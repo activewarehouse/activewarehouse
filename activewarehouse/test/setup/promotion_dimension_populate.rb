@@ -1,0 +1,1 @@
+ETL::Engine.process(File.dirname(__FILE__) + '/promotion_dimension.ctl')

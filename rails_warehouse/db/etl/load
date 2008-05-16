@@ -1,0 +1,4 @@
+#!/bin/sh
+# This script will retrieve the SVN log as an XML file and then execute the ETL process.
+./download_aw_log.rb
+etl load.ebf

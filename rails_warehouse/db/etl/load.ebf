@@ -1,0 +1,5 @@
+run 'date_dimension.ctl'
+run 'author_dimension.ctl'
+run 'file_dimension.ctl'
+run 'change_type_dimension.ctl'
+run 'file_revision_facts.ctl'
