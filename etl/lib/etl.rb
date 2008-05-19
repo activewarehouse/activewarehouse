@@ -79,6 +79,8 @@ module ETL #:nodoc:
   end
   class DefinitionError < ControlError #:nodoc:
   end
+  class ConfigurationError < ControlError #:nodoc:
+  end
   class MismatchError < ETLError #:nodoc:
   end
   class ResolverError < ETLError #:nodoc:
