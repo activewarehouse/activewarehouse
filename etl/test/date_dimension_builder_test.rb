@@ -20,7 +20,11 @@ class DateDimensionBuilderTest < Test::Unit::TestCase
   end
   
   def test_build
-    builder = ETL::Builder::DateDimensionBuilder.new
+    # specific dates required when testing, because leap years affect
+    # how many records are built
+    start_date = Date.parse('2002-05-19').to_time
+    end_date = Date.parse('2007-05-19').to_time
+    builder = ETL::Builder::DateDimensionBuilder.new(start_date, end_date)
     records = builder.build
     assert_equal 1827, records.length
     assert_date_dimension_record_equal(builder.start_date, records.first)

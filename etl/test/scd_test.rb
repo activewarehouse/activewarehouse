@@ -24,6 +24,10 @@ class ScdTest < Test::Unit::TestCase
       ETL::Engine.process(File.dirname(__FILE__) + '/scd_test_type_2.ctl')
     end
     lines = File.readlines(File.dirname(__FILE__) + '/output/scd_test_type_2.txt')
+    
+    # TODO: This is a test bug - if the tests don't run at the correct
+    # time, this timestamp may not match the timestamp used during the
+    # creation of the SCD row
     timestamp = Time.now
     assert_equal(
       "1,Bob,Smith,200 South Drive,Boston,MA,32123,#{timestamp.to_s(:db)},9999-12-31 00:00:00\n", 

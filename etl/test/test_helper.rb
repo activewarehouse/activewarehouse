@@ -10,8 +10,15 @@ ETL::Engine.init(:config => File.dirname(__FILE__) + '/database.yml')
 ETL::Engine.logger = Logger.new(STDOUT)
 ETL::Engine.logger.level = Logger::FATAL
 
-require 'connection/native_mysql/connection'
+db = ENV['DB'] ||= 'native_mysql'
+require "connection/#{db}/connection"
 ActiveRecord::Base.establish_connection :operational_database
+
+if db == 'postgresql'
+  # TODO: Is there a better way to avoid errors when this sequence
+  # doesn't exist or isn't initialized?
+  ActiveRecord::Base.connection.execute "SELECT nextval('people_id_seq')"
+end
 
 ETL::Execution::Job.delete_all
 ETL::Execution::Record.delete_all
