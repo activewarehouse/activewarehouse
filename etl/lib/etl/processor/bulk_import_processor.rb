@@ -21,6 +21,8 @@ module ETL #:nodoc:
       attr_accessor :field_enclosure
       # The line separator (defaults to a newline)
       attr_accessor :line_separator
+      # The string that indicates a NULL (defaults to an empty string)
+      attr_accessor :null_string
        
       # Initialize the processor.
       #
@@ -43,6 +45,7 @@ module ETL #:nodoc:
         @columns = configuration[:columns]
         @field_separator = (configuration[:field_separator] || ',')
         @line_separator = (configuration[:line_separator] || "\n")
+        @null_string = (configuration[:null_string] || "")
         @field_enclosure = configuration[:field_enclosure]
         
         raise ControlError, "Target must be specified" unless @target
@@ -59,8 +62,9 @@ module ETL #:nodoc:
           conn.truncate(table_name) if truncate
           options = {}
           options[:columns] = columns
-          if field_separator || field_enclosure
+          if field_separator || field_enclosure || line_separator || null_string
             options[:fields] = {}
+            options[:fields][:null_string] = null_string if null_string
             options[:fields][:delimited_by] = field_separator if field_separator
             options[:fields][:enclosed_by] = field_enclosure if field_enclosure
             options[:fields][:terminated_by] = line_separator if line_separator

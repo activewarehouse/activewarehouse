@@ -1,8 +1,8 @@
 drop table if exists people;
 create table people (
-  first_name char(255),
-  last_name char(255),
-  ssn char(64)
+  first_name char(255) not null,
+  last_name char(255) not null,
+  ssn char(64) not null
 );
 drop table if exists places;
 create table places (

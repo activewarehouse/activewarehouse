@@ -1,8 +1,8 @@
 drop table people;
 create table people (
-  first_name character varying(255),
-  last_name character varying(255),
-  ssn character varying(64)
+  first_name character varying(255) not null,
+  last_name character varying(255) not null,
+  ssn character varying(64) not null
 );
 
 -- Needed for ActiveRecord
