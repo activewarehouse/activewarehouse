@@ -78,12 +78,11 @@ def execute
 
     ETL::Engine.init(options)
     ARGV.each do |f|
-      puts "Processing #{f}"
       ETL::Engine.realtime_activity = true
       ETL::Engine.process(f)
     end
   
-    puts "ETL process complete"
+    puts "ETL process complete\n\n"
   end
 end
 

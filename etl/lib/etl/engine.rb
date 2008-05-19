@@ -19,7 +19,7 @@ module ETL #:nodoc:
       # * <tt>:rails_root</tt>: Set to the rails root to boot rails
       def init(options={})
         unless @initialized
-          puts "initializing ETL engine"
+          puts "initializing ETL engine\n\n"
           @limit = options[:limit]
           @offset = options[:offset]
           @log_write_mode = 'w' if options[:newlog]
@@ -272,6 +272,7 @@ module ETL #:nodoc:
     # Process the specified batch file
     def process_batch(batch)
       batch = ETL::Batch::Batch.resolve(batch, self)
+      puts "Processing batch #{batch.file}"
     
       ETL::Engine.batch = ETL::Execution::Batch.create!(
         :batch_file => batch.file,
@@ -288,6 +289,7 @@ module ETL #:nodoc:
     # Process the specified control file
     def process_control(control)
       control = ETL::Control::Control.resolve(control)
+      puts "\nProcessing control #{control.file}"
       
       ETL::Engine.job = ETL::Execution::Job.create!(
         :control_file => control.file, 
