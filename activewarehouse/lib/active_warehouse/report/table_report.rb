@@ -8,6 +8,9 @@ module ActiveWarehouse #:nodoc:
       attr_accessor :format
       attr_accessor :link_cell
       attr_accessor :html_params
+      # TODO: do these need to be in the actual table?
+      attr_accessor :column_order
+      attr_accessor :row_order
       
       # Get any format options
       def format

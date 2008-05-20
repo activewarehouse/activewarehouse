@@ -11,6 +11,7 @@ module ActiveWarehouse
 				@name = report.send("#{dimension_type}_dimension_name")
 				@hierarchy_name = report.send("#{dimension_type}_hierarchy")
 				@filters = report.send("#{dimension_type}_filters")
+				@order = report.send("#{dimension_type}_order")
 				@param_prefix = report.send("#{dimension_type}_param_prefix")
 				@stage = (params[:stage] || report.send("#{dimension_type}_stage")).to_i
 				
@@ -74,7 +75,8 @@ module ActiveWarehouse
 
 		    find_options[:conditions] = nil
 		    find_options[:conditions] = conditions_sql.join(" AND ") if conditions_sql.length > 0
-		    find_options[:group] = find_options[:order] = group_by.join(',')
+		    find_options[:group] = group_by.join(',')
+		    find_options[:order] = @order || find_options[:group]
 
 		    q = "SELECT #{find_options[:select]} FROM #{dimension_class.table_name}"
 		    q << " WHERE #{find_options[:conditions]}" if find_options[:conditions]
