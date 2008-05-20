@@ -7,16 +7,13 @@ require 'rake/contrib/rubyforgepublisher'
 
 require File.join(File.dirname(__FILE__), 'lib/etl', 'version')
 
-PKG_BUILD       = ENV['PKG_BUILD'] ? '.' + ENV['PKG_BUILD'] : ''
-PKG_NAME        = 'activewarehouse-etl'
-PKG_VERSION     = ETL::VERSION::STRING + PKG_BUILD
-PKG_FILE_NAME   = "#{PKG_NAME}-#{PKG_VERSION}"
-PKG_DESTINATION = ENV["PKG_DESTINATION"] || "../#{PKG_NAME}"
-
-RELEASE_NAME  = "REL #{PKG_VERSION}"
-
-RUBY_FORGE_PROJECT = "activewarehouse"
-RUBY_FORGE_USER    = "aeden"
+module AWETL
+  PKG_BUILD       = ENV['PKG_BUILD'] ? '.' + ENV['PKG_BUILD'] : ''
+  PKG_NAME        = 'activewarehouse-etl'
+  PKG_VERSION     = ETL::VERSION::STRING + PKG_BUILD
+  PKG_FILE_NAME   = "#{PKG_NAME}-#{PKG_VERSION}"
+  PKG_DESTINATION = ENV["PKG_DESTINATION"] || "../#{PKG_NAME}"
+end
 
 desc 'Default: run unit tests.'
 task :default => :test
@@ -49,50 +46,56 @@ namespace :rcov do
   end
 end
 
-PKG_FILES = FileList[
-  'CHANGELOG',
-  'LICENSE',
-  'README',
-  'TODO',
-  'Rakefile',
-  'bin/**/*',
-  'doc/**/*',
-  'lib/**/*',
-  'examples/**/*',
-] - [ 'test' ]
+# Gem Spec
 
-spec = Gem::Specification.new do |s|
-  s.name = 'activewarehouse-etl'
-  s.version = PKG_VERSION
-  s.summary = "Pure Ruby ETL package."
-  s.description = <<-EOF
-    ActiveWarehouse ETL is a pure Ruby Extract-Transform-Load application for loading data into a database.
-  EOF
-
-  s.add_dependency('rake',                '>= 0.7.1')
-  s.add_dependency('activesupport',       '>= 1.3.1')
-  s.add_dependency('activerecord',        '>= 1.14.4')
-  s.add_dependency('fastercsv',           '>= 1.2.0')
-  s.add_dependency('adapter_extensions',  '>= 0.1.0')
-
-  s.rdoc_options << '--exclude' << '.'
-  s.has_rdoc = false
-
-  s.files = PKG_FILES.to_a.delete_if {|f| f.include?('.svn')}
-  s.require_path = 'lib'
-
-  s.bindir = "bin" # Use these for applications.
-  s.executables = ['etl']
-  s.default_executable = "etl"
-
-  s.author = "Anthony Eden"
-  s.email = "anthonyeden@gmail.com"
-  s.homepage = "http://activewarehouse.rubyforge.org/etl"
-  s.rubyforge_project = "activewarehouse"
+def package_files(package_prefix)
+  FileList[
+    "#{package_prefix}CHANGELOG",
+    "#{package_prefix}LICENSE",
+    "#{package_prefix}README",
+    "#{package_prefix}TODO",
+    "#{package_prefix}Rakefile",
+    "#{package_prefix}bin/**/*",
+    "#{package_prefix}doc/**/*",
+    "#{package_prefix}lib/**/*",
+    "#{package_prefix}examples/**/*",
+  ] - [ "#{package_prefix}test" ]
 end
 
-Rake::GemPackageTask.new(spec) do |pkg|
-  pkg.gem_spec = spec
+def aw_etl_spec(package_prefix = '')
+  Gem::Specification.new do |s|
+    s.name = 'activewarehouse-etl'
+    s.version = AWETL::PKG_VERSION
+    s.summary = "Pure Ruby ETL package."
+    s.description = <<-EOF
+      ActiveWarehouse ETL is a pure Ruby Extract-Transform-Load application for loading data into a database.
+    EOF
+
+    s.add_dependency('rake',                '>= 0.7.1')
+    s.add_dependency('activesupport',       '>= 1.3.1')
+    s.add_dependency('activerecord',        '>= 1.14.4')
+    s.add_dependency('fastercsv',           '>= 1.2.0')
+    s.add_dependency('adapter_extensions',  '>= 0.1.0')
+
+    s.rdoc_options << '--exclude' << '.'
+    s.has_rdoc = false
+
+    s.files = package_files(package_prefix).to_a.delete_if {|f| f.include?('.svn')}
+    s.require_path = 'lib'
+
+    s.bindir = "#{package_prefix}bin" # Use these for applications.
+    s.executables = ['etl']
+    s.default_executable = "etl"
+
+    s.author = "Anthony Eden"
+    s.email = "anthonyeden@gmail.com"
+    s.homepage = "http://activewarehouse.rubyforge.org/etl"
+    s.rubyforge_project = "activewarehouse"
+  end
+end
+
+Rake::GemPackageTask.new(aw_etl_spec) do |pkg|
+  pkg.gem_spec = aw_etl_spec
   pkg.need_tar = true
   pkg.need_zip = true
 end
@@ -112,10 +115,10 @@ task :lines do
       codelines += 1
     end
     puts "L: #{sprintf("%4d", lines)}, LOC #{sprintf("%4d", codelines)} | #{file_name}"
-    
+
     total_lines     += lines
     total_codelines += codelines
-    
+
     lines, codelines = 0, 0
   end
 
@@ -127,7 +130,7 @@ task :release => [ :package ] do
   `rubyforge login`
 
   for ext in %w( gem tgz zip )
-    release_command = "rubyforge add_release activewarehouse #{PKG_NAME} 'REL #{PKG_VERSION}' pkg/#{PKG_NAME}-#{PKG_VERSION}.#{ext}"
+    release_command = "rubyforge add_release activewarehouse #{AWETL::PKG_NAME} 'REL #{AWETL::PKG_VERSION}' pkg/#{AWETL::PKG_NAME}-#{AWETL::PKG_VERSION}.#{ext}"
     puts release_command
     system(release_command)
   end
@@ -143,6 +146,6 @@ task :reinstall => [:package] do
   windows = RUBY_PLATFORM =~ /mswin/
   sudo = windows ? '' : 'sudo'
   gem = windows ? 'gem.bat' : 'gem'
-  `#{sudo} #{gem} uninstall -x -i #{PKG_NAME}`
-  `#{sudo} #{gem} install pkg/#{PKG_NAME}-#{PKG_VERSION}`
+  `#{sudo} #{gem} uninstall -x -i #{AWETL::PKG_NAME}`
+  `#{sudo} #{gem} install pkg/#{AWETL::PKG_NAME}-#{AWETL::PKG_VERSION}`
 end
