@@ -93,14 +93,8 @@ module ETL #:nodoc:
       # Get the list of columns to read. This is defined in the source
       # definition as either an Array or Hash
       def columns
-        case definition
-        when Array
-          definition.collect(&:to_sym)
-        when Hash
-          definition.keys.collect(&:to_sym)
-        else
-          raise "Definition must be either an Array or a Hash"
-        end
+        # weird default is required for writing to cache correctly
+        @columns ||= query_rows.any? ? query_rows.first.keys : ['']
       end
       
       # Returns each row from the source. If read_locally is specified then
@@ -118,7 +112,7 @@ module ETL #:nodoc:
             write_local(file)
             read_rows(file, &block)
           else
-            connection.select_all(query).each do |row|
+            query_rows.each do |row|
               row = ETL::Row.new(row.symbolize_keys)
               row.source = self
               yield row
@@ -158,7 +152,7 @@ module ETL #:nodoc:
         t = Benchmark.realtime do
           FasterCSV.open(file, 'w') do |f|
             f << columns
-            connection.select_all(query).each do |row|
+            query_rows.each do |row|
               f << columns.collect { |column| row[column.to_s] }
               lines += 1
             end
@@ -202,6 +196,10 @@ module ETL #:nodoc:
         q = q.gsub(/\n/,' ')
         ETL::Engine.logger.info "Query: #{q}"
         @query = q
+      end
+      
+      def query_rows
+        @query_rows ||= connection.select_all(query)
       end
       
       # Get the database connection to use
