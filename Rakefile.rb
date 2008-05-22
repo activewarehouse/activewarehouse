@@ -7,7 +7,7 @@ require 'date'
 namespace :github do
   desc "Update Github Gemspec"
   task :update_gemspec do
-    [aw_spec('activewarehouse/'), aw_etl_spec('etl/')].each do |spec|
+    [AW.spec('activewarehouse/'), AWETL.spec('etl/')].each do |spec|
       File.open(File.join(File.dirname(__FILE__), "#{spec.name}.gemspec"), "w"){|f| f << spec.to_ruby}
     end
   end

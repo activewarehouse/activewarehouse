@@ -48,54 +48,56 @@ end
 
 # Gem Spec
 
-def package_files(package_prefix)
-  FileList[
-    "#{package_prefix}CHANGELOG",
-    "#{package_prefix}LICENSE",
-    "#{package_prefix}README",
-    "#{package_prefix}TODO",
-    "#{package_prefix}Rakefile",
-    "#{package_prefix}bin/**/*",
-    "#{package_prefix}doc/**/*",
-    "#{package_prefix}lib/**/*",
-    "#{package_prefix}examples/**/*",
-  ] - [ "#{package_prefix}test" ]
-end
+module AWETL
+  def self.package_files(package_prefix)
+    FileList[
+      "#{package_prefix}CHANGELOG",
+      "#{package_prefix}LICENSE",
+      "#{package_prefix}README",
+      "#{package_prefix}TODO",
+      "#{package_prefix}Rakefile",
+      "#{package_prefix}bin/**/*",
+      "#{package_prefix}doc/**/*",
+      "#{package_prefix}lib/**/*",
+      "#{package_prefix}examples/**/*",
+    ] - [ "#{package_prefix}test" ]
+  end
 
-def aw_etl_spec(package_prefix = '')
-  Gem::Specification.new do |s|
-    s.name = 'activewarehouse-etl'
-    s.version = AWETL::PKG_VERSION
-    s.summary = "Pure Ruby ETL package."
-    s.description = <<-EOF
-      ActiveWarehouse ETL is a pure Ruby Extract-Transform-Load application for loading data into a database.
-    EOF
+  def self.spec(package_prefix = '')
+    Gem::Specification.new do |s|
+      s.name = 'activewarehouse-etl'
+      s.version = AWETL::PKG_VERSION
+      s.summary = "Pure Ruby ETL package."
+      s.description = <<-EOF
+        ActiveWarehouse ETL is a pure Ruby Extract-Transform-Load application for loading data into a database.
+      EOF
 
-    s.add_dependency('rake',                '>= 0.7.1')
-    s.add_dependency('activesupport',       '>= 1.3.1')
-    s.add_dependency('activerecord',        '>= 1.14.4')
-    s.add_dependency('fastercsv',           '>= 1.2.0')
-    s.add_dependency('adapter_extensions',  '>= 0.1.0')
+      s.add_dependency('rake',                '>= 0.7.1')
+      s.add_dependency('activesupport',       '>= 1.3.1')
+      s.add_dependency('activerecord',        '>= 1.14.4')
+      s.add_dependency('fastercsv',           '>= 1.2.0')
+      s.add_dependency('adapter_extensions',  '>= 0.1.0')
 
-    s.rdoc_options << '--exclude' << '.'
-    s.has_rdoc = false
+      s.rdoc_options << '--exclude' << '.'
+      s.has_rdoc = false
 
-    s.files = package_files(package_prefix).to_a.delete_if {|f| f.include?('.svn')}
-    s.require_path = 'lib'
+      s.files = package_files(package_prefix).to_a.delete_if {|f| f.include?('.svn')}
+      s.require_path = 'lib'
 
-    s.bindir = "#{package_prefix}bin" # Use these for applications.
-    s.executables = ['etl']
-    s.default_executable = "etl"
+      s.bindir = "#{package_prefix}bin" # Use these for applications.
+      s.executables = ['etl']
+      s.default_executable = "etl"
 
-    s.author = "Anthony Eden"
-    s.email = "anthonyeden@gmail.com"
-    s.homepage = "http://activewarehouse.rubyforge.org/etl"
-    s.rubyforge_project = "activewarehouse"
+      s.author = "Anthony Eden"
+      s.email = "anthonyeden@gmail.com"
+      s.homepage = "http://activewarehouse.rubyforge.org/etl"
+      s.rubyforge_project = "activewarehouse"
+    end
   end
 end
 
-Rake::GemPackageTask.new(aw_etl_spec) do |pkg|
-  pkg.gem_spec = aw_etl_spec
+Rake::GemPackageTask.new(AWETL.spec) do |pkg|
+  pkg.gem_spec = AWETL.spec
   pkg.need_tar = true
   pkg.need_zip = true
 end
