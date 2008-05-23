@@ -2,8 +2,9 @@ require File.join(File.dirname(__FILE__), 'test_helper')
 
 class DimensionBuilderTest < Test::Unit::TestCase
   def test_build
-    start_date = Time.parse('2002-01-01')
-    end_date = start_date.years_since(5).yesterday
+    start_time = Time.parse('2002-01-01')
+    start_date = start_time.to_date
+    end_date = start_time.years_since(5).yesterday.to_date
     ddb = ActiveWarehouse::Builder::DateDimensionBuilder.new(start_date, end_date)
     ddb.holiday_indicators << start_date
     records = ddb.build
