@@ -22,11 +22,11 @@ module ActiveWarehouse
 				@query_result = execute_query
 				@fact_attributes = []
 				
-				report.fact_attributes.each	do |fact_attribute|
-          case fact_attribute
+				report.fact_attributes.each	do |fact_attribute_name|
+          case fact_attribute_name
           when Symbol, String
-            fact_attribute = report.fact_class.field_for_name(fact_attribute.to_s.dup)
-            raise "Field name #{field_name} not defined in the fact #{fact_class}" if fact_attribute.nil?
+            fact_attribute = report.fact_class.field_for_name(fact_attribute_name.to_s.dup)
+            raise "Field name #{fact_attribute_name} not defined in the fact #{report.fact_class}" if fact_attribute.nil?
           end			
 					@fact_attributes << fact_attribute
 				end
