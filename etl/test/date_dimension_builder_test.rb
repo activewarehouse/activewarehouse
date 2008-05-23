@@ -3,20 +3,20 @@ require File.dirname(__FILE__) + '/test_helper'
 class DateDimensionBuilderTest < Test::Unit::TestCase
   
   def test_initialization_defaults
-    start_date = Time.now.years_ago(5)
-    end_date = Time.now
+    start_date = Time.now.years_ago(5).to_date
+    end_date = Time.now.to_date
     builder = ETL::Builder::DateDimensionBuilder.new
-    assert_time_equal start_date, builder.start_date
-    assert_time_equal end_date, builder.end_date
+    assert_equal start_date, builder.start_date
+    assert_equal end_date, builder.end_date
     assert_equal [], builder.holiday_indicators
   end
   
   def test_initializations_with_preset_values    
-    start_date = Time.now.years_ago(2)
-    end_date = Time.now.years_ago(1)
+    start_date = Time.now.years_ago(2).to_date
+    end_date = Time.now.years_ago(1).to_date
     builder = ETL::Builder::DateDimensionBuilder.new(start_date, end_date)
-    assert_time_equal start_date, builder.start_date
-    assert_time_equal end_date, builder.end_date
+    assert_equal start_date, builder.start_date
+    assert_equal end_date, builder.end_date
   end
   
   def test_build
@@ -30,14 +30,9 @@ class DateDimensionBuilderTest < Test::Unit::TestCase
     assert_date_dimension_record_equal(builder.start_date, records.first)
   end
   
-  def assert_time_equal(t1, t2)
-    assert_equal t1.year, t2.year
-    assert_equal t1.month, t2.month
-    assert_equal t1.hour, t2.hour
-    assert_equal t1.min, t2.min
-  end
-  
   def assert_date_dimension_record_equal(date, record)
+    real_date = date
+    date = date.to_time
     assert_equal date.strftime("%m/%d/%Y"), record[:date]
     assert_equal date.strftime("%B %d,%Y"), record[:full_date_description]
     assert_equal date.strftime("%A"), record[:day_of_week]
@@ -68,7 +63,7 @@ class DateDimensionBuilderTest < Test::Unit::TestCase
     assert_equal weekday_indicators[date.wday], record[:weekday_indicator]
     assert_equal 'None', record[:selling_season]
     assert_equal 'None', record[:major_event]
-    assert_equal record[:sql_date_stamp], date
+    assert_equal record[:sql_date_stamp], real_date
   end
   
   private
