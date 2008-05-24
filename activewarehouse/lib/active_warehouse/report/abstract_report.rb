@@ -39,7 +39,7 @@ module ActiveWarehouse #:nodoc:
 
       # Get the column dimension class
       def column_dimension_class
-        @column_dimension_class ||= ActiveWarehouse::Dimension.class_name(self.column_dimension_name).constantize
+        @column_dimension_class ||= fact_class.dimension_class(self.column_dimension_name)
       end
 
       # Get the column hierarchy. Uses the first hierarchy in the column 
@@ -60,8 +60,7 @@ module ActiveWarehouse #:nodoc:
 
       # Get the row dimension class
       def row_dimension_class
-        @row_dimension_class ||= ActiveWarehouse::Dimension.class_name(
-          self.row_dimension_name).constantize
+        @row_dimension_class ||= fact_class.dimension_class(self.row_dimension_name)
       end
       
       # Get the row hierarchy. Uses the first hierarchy in the row dimension if
