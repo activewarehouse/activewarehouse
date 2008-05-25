@@ -11,7 +11,6 @@ module ActiveWarehouse
 				@name = report.send("#{dimension_type}_dimension_name")
 				@hierarchy_name = report.send("#{dimension_type}_hierarchy")
 				@filters = report.send("#{dimension_type}_filters")
-				@order = report.send("#{dimension_type}_order")
 				@param_prefix = report.send("#{dimension_type}_param_prefix")
 				@stage = (params[:stage] || report.send("#{dimension_type}_stage")).to_i
 				
