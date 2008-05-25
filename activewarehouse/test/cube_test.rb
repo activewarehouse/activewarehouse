@@ -59,6 +59,7 @@ class CubeTest < Test::Unit::TestCase
     assert_query_success(cube)
     assert_old_style_query_success(cube)
     assert_query_drilldown_success(cube)
+    assert_shared_column_name_success(cube)
   end
   
   def test_set_aggregate_class

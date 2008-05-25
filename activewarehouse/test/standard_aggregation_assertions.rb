@@ -127,6 +127,22 @@ module StandardAggregationAssertions
     assert_in_delta 1.83, values['Avg Sales Amount'], 0.01
   end
   
+  def assert_shared_column_name_success(object_to_query)
+    results = object_to_query.query(
+      # I'd prefer to use different dimensions here, but can't find
+      # two that have the same column names.  This is a simple way 
+      # to get two dimensions with the same column names.
+      :column_dimension_name => :date, 
+      :column_hierarchy_name => :cy, 
+      :row_dimension_name => :date, 
+      :row_hierarchy_name => :cy
+    )
+    values = results.values("2001", "2001").values
+    assert values.any? { |v| v > 0 }, "should be able to find results for two dimensions that have the same column name"
+    values = results.values("2002", "2002").values
+    assert values.any? { |v| v > 0 }, "should be able to find results for two dimensions that have the same column name"
+  end
+  
   def assert_count_distinct_success(object_to_query)
     # use the dimension that has has_and_belongs_to_many relationship
     results = object_to_query.query(

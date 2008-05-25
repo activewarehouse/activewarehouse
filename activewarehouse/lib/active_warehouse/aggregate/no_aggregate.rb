@@ -111,8 +111,8 @@ module ActiveWarehouse #:nodoc:
 
         sql = ''
         sql += "SELECT\n"
-        sql += "  #{column_dimension_name}.#{current_column_name},\n"
-        sql += "  #{row_dimension_name}.#{current_row_name},\n"
+        sql += "  #{column_dimension_name}.#{current_column_name} as #{column_dimension_name}_1_#{current_column_name},\n"
+        sql += "  #{row_dimension_name}.#{current_row_name} as #{row_dimension_name}_2_#{current_row_name},\n"
         sql += fact_columns
         sql += "\nFROM\n"
 
@@ -196,8 +196,8 @@ module ActiveWarehouse #:nodoc:
         )
         
         cube_class.connection.select_all(sql).each do |row|
-          result.add_data(row.delete(current_row_name.to_s),
-                          row.delete(current_column_name.to_s),
+          result.add_data(row.delete("#{row_dimension_name}_2_#{current_row_name}"),
+                          row.delete("#{column_dimension_name}_1_#{current_column_name}"),
                           row) # the rest of the members of row are the fact columns
         end
         
