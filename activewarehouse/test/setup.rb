@@ -8,7 +8,7 @@ require 'rubygems'
 unless Kernel.respond_to?(:gem)
   Kernel.send :alias_method, :gem, :require_gem
 end
-gem 'activewarehouse-etl'
+# gem 'activewarehouse-etl'
 require 'etl'
 
 connection = (ENV['DB'] || 'native_mysql')

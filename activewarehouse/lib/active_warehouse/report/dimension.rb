@@ -42,50 +42,17 @@ module ActiveWarehouse
 			end
 			
 			def ancestors
-		    col_path = []
-		    0.upto(stage - 1) do |s| 
-		      p = @params[:ancestors]["#{dimension_class.hierarchy(hierarchy_name)[s]}"]
-		      col_path << p unless p.nil?
-		    end
-				col_path
+		    (0..stage-1).map do |s| 
+		      @params[:ancestors][hierarchy[s].to_s]
+		    end.compact
 			end
 
 			def has_children?
 				stage < hierarchy_length - 1
 			end
 
-			# TODO Move to dimension
-			# looks like we could give it all the values for each level to select on before invoking the method on the instance method
-			# maybe have a values call on this dimension object that digests the params and have the original dimension object do the select itself
 		  def available_values
-		    # Construct the column find options
-		    find_options = {}
-		    group_by = []
-		    conditions_sql = []
-		    conditions_args = []
-		    @stage.downto(0) do |stage|
-		      level = dimension_class.hierarchy(hierarchy_name)[stage]
-		      group_by << level
-		      unless stage == @stage
-		        conditions_sql << "#{level} = '#{@params[:ancestors][level.to_s]}'" # TODO protect against injection
-		      else
-		        find_options[:select] = level
-		      end
-		    end
-
-		    find_options[:conditions] = nil
-		    find_options[:conditions] = conditions_sql.join(" AND ") if conditions_sql.length > 0
-		    find_options[:group] = group_by.join(',')
-		    find_options[:order] = @order || find_options[:group]
-
-		    q = "SELECT #{find_options[:select]} FROM #{dimension_class.table_name}"
-		    q << " WHERE #{find_options[:conditions]}" if find_options[:conditions]
-		    q << " GROUP BY #{find_options[:group]}" if find_options[:group]
-		    q << " ORDER BY #{find_options[:order]}" if find_options[:order]
-
-		    puts "query: #{q}"
-
-		    dimension_class.connection.select_values(q)
+		    dimension_class.available_child_values(hierarchy_name, ancestors).map(&:to_s)
 		  end
 		end
 	end
