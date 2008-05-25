@@ -103,6 +103,18 @@ module ActiveWarehouse
         agg_fields
       end
       
+      def calculated_fields
+        fact_class.calculated_fields
+      end
+      
+      def fields(dims=[])
+        aggregate_fields(dims) + calculated_fields
+      end
+      
+      def field_names(dims=[])
+        fields(dims).map { |field| field.name.to_sym }
+      end
+      
       # Get the class name for the specified cube name
       # Example: Regional Sales will become RegionalSalesCube
       def class_name(name)
