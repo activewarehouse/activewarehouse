@@ -240,12 +240,10 @@ module ActiveWarehouse #:nodoc
         options = {:select => select_sql, :order => order}
 
         options[:conditions] = conditions unless conditions.nil?
-        values = []
-        find(:all, options).each do |dim|
-          value = dim.send(child_level_method)
-          values << dim.send(child_level_method) unless values.include?(value)
-        end
-        values.to_a
+
+        find(:all, options).map do |dim|
+          dim.send(child_level_method)
+        end.uniq
       end
       alias :available_children_values :available_child_values
       
