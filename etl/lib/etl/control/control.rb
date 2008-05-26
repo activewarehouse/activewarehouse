@@ -145,15 +145,26 @@ module ETL #:nodoc:
         control.transforms
       end
       
-      # Define a screen block. The type argument must be one of :fatal, :error
-      # or :warn
+      # Define a before post-process screen block. The type argument must be
+      # one of :fatal, :error or :warn
       def screen(type, &block)
         screens[type] << block
       end
       
-      # Get the screen blocks
+      # Get the before post-process screen blocks
       def screens
         control.screens
+      end
+      
+      # Define an after post-proces screen block. The type argument must be
+      # one of :fatal, :error or :warn
+      def after_post_process_screen(type, &block)
+        after_post_process_screens[type] << block
+      end
+      
+      # Get the after post-process screen blocks
+      def after_post_process_screens
+        control.after_post_process_screens
       end
       
       # Rename the source field to the destination field
@@ -346,8 +357,18 @@ module ETL #:nodoc:
         @transforms ||= []
       end
       
+      # A hash of the screens executed before post-process
       def screens
         @screens ||= {
+          :fatal => [],
+          :error => [],
+          :warn => []
+        }
+      end
+      
+      # A hash of the screens executed after post-process
+      def after_post_process_screens
+        @after_post_process_screens ||= {
           :fatal => [],
           :error => [],
           :warn => []

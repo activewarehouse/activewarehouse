@@ -422,7 +422,7 @@ module ETL #:nodoc:
         destination.close
       end
       
-      say_on_own_line "Executing screens"
+      say_on_own_line "Executing before post-process screens"
       begin
         execute_screens(control)
       rescue FatalScreenError => e
@@ -443,6 +443,20 @@ module ETL #:nodoc:
       if destinations.length > 0
         say "Wrote #{Engine.rows_written} lines to destinations"
       end
+
+      say_on_own_line "Executing after post-process screens"
+      begin
+        execute_screens(control, :after_post_process)
+      rescue FatalScreenError => e
+        say "Fatal screen error during job execution: #{e.message}"
+        exit
+      rescue ScreenError => e
+        say "Screen error during job execution: #{e.message}"
+        return
+      else
+        say "Screens passed"
+      end
+
       say "Completed #{control.file} in #{distance_of_time_in_words(start_time)} with #{errors.length} errors."
       say "Processing average: #{Engine.average_rows_per_second} rows/sec)"
       
@@ -509,9 +523,15 @@ module ETL #:nodoc:
     end
     
     # Execute all screens
-    def execute_screens(control)
+    def execute_screens(control, timing = :before_post_process)
+      screens = case timing
+        when :after_post_process
+          control.after_post_process_screens
+        else # default to before post-process screens
+          control.screens
+        end
       [:fatal,:error,:warn].each do |type|
-        control.screens[type].each do |block|
+        screens[type].each do |block|
           begin
             block.call
           rescue => e
