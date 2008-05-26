@@ -457,7 +457,7 @@ module ETL #:nodoc:
         say "Screens passed"
       end
 
-      say "Completed #{control.file} in #{distance_of_time_in_words(start_time)} with #{errors.length} errors."
+      say_on_own_line "Completed #{control.file} in #{distance_of_time_in_words(start_time)} with #{errors.length} errors."
       say "Processing average: #{Engine.average_rows_per_second} rows/sec)"
       
       say "Avg after_reads: #{Engine.rows_read/benchmarks[:after_reads]} rows/sec" if benchmarks[:after_reads] > 0
