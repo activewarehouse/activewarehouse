@@ -75,8 +75,6 @@ module ActiveWarehouse
 					value = row.cells[column_index].raw_value
 					if value.is_a? Numeric
 						total += value
-					else
-						total = ""
 					end	
 				end
 					
