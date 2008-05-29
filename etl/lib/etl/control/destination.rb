@@ -126,10 +126,15 @@ module ETL #:nodoc:
         @compound_key_constraints ||= {}
       end
       
-      # Return fields which are Slowly Changing Dimension fields. Return nil 
-      # by default.
-      def scd_fields
-        @scd_fields ||= configuration[:scd_fields]
+      # Return fields which are Slowly Changing Dimension fields. 
+      # Uses the scd_fields specified in the configuration.  If that's
+      # missing, uses all of the row's fields.
+      def scd_fields(row)
+        # The caching is critical here - it ensures that row.keys is only 
+        # called once.  That means we always get the fields in the same order.
+        # Since these values will be used to calculate a CRC, it's important
+        # that they always come in the same order.
+        @scd_fields ||= configuration[:scd_fields] || row.keys
       end
       
       def scd?
@@ -253,15 +258,10 @@ module ETL #:nodoc:
       
       # Calculates a CRC for the given row.  Only uses the scd_fields,
       # if provided.  Defaults to doing a crc on all the field's
-      # values. 
-      #   
-      # TODO: The default concatenates all the values, but in a
-      # non-deterministic order.  Different runs on the same row could
-      # give different CRCs.
+      # values.
       def crc_for_row(row)
-        s = String.new
-        (scd_fields || row.keys).each { |field| s << row[field].to_s }
-        crc = Zlib.crc32(s)
+        s = scd_fields(row).inject("") { |str, field| str + row[field].to_s }
+        Zlib.crc32(s)
       end
       
       # Helper for turning an array of natural key values into a
