@@ -36,22 +36,18 @@ class ScdTest < Test::Unit::TestCase
     lines = lines_for('scd_test_type_2.txt')
     
     assert_equal(
-      # TODO: primary keys getting clobbered.  Should pass with followin row instead
-      # "1,Bob,Smith,200 South Drive,Boston,MA,32123,#{timestamp.to_s(:db)},#{timestamp.to_s(:db)}\n", 
-      "2,Bob,Smith,200 South Drive,Boston,MA,32123,#{timestamp.to_s(:db)},#{timestamp.to_s(:db)}\n", 
+      "1,Bob,Smith,200 South Drive,Boston,MA,32123,#{timestamp.to_s(:db)},#{timestamp.to_s(:db)}\n", 
       lines[0], "assertion failed in run 2"
     )
     assert_equal(
-      # TODO: primary keys getting clobbered.  Should pass with followin row instead
-      # "2,Bob,Smith,1010 SW 23rd St,Los Angeles,CA,90392,#{timestamp.to_s(:db)},9999-12-31 00:00:00\n", 
-      "3,Bob,Smith,1010 SW 23rd St,Los Angeles,CA,90392,#{timestamp.to_s(:db)},9999-12-31 00:00:00\n", 
+      "2,Bob,Smith,1010 SW 23rd St,Los Angeles,CA,90392,#{timestamp.to_s(:db)},9999-12-31 00:00:00\n", 
       lines[1]
     )
     
     assert_equal 2, count_bobs
   end
   
-  # This should pass, but doesn't (b/c CRC isn't being saved?) (run outside of a job)
+  # # This should pass, but doesn't (b/c CRC isn't being saved?) (run outside of a job)
   # def test_type_2_scd_no_change_keeps_row
   #   do_type_2_run(1)
   #   do_type_2_run(1)

@@ -215,6 +215,8 @@ module ETL #:nodoc:
       def add_virtuals!(row)
         if mapping[:virtual]
           mapping[:virtual].each do |key,value|
+            # If the row already has the virtual set, assume that's correct
+            next if row[key]
             # Engine.logger.debug "Mapping virtual #{key}/#{value} for row #{row}"
             case value
             when Class
