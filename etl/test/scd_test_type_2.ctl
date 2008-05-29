@@ -26,7 +26,7 @@ destination :out, {
     :id, :first_name, :last_name, :address, :city, :state, :zip_code, :effective_date, :end_date
   ],
   :virtual => {
-    :id => :surrogate_key
+    :id => ETL::Generator::SurrogateKeyGenerator.new(:target => :data_warehouse, :table => 'person_dimension')
   }
 }
 

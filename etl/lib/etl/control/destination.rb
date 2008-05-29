@@ -300,13 +300,9 @@ module ETL #:nodoc:
             # If there is no truncate then the row will exist twice in the database
             ETL::Engine.logger.debug "deleting old row"
             
-            # TODO: This could delete more than one record, if earlier
-            # records have matching natural keys.  Would be better to
-            # use the original_record's primary key.
-            q = "DELETE FROM #{dimension_table} WHERE #{natural_key_equality_for_row(row)}"
-            num_rows_affected = connection.delete(q)
-            # do this?
-            #raise "Should have deleted a single record" if num_rows_affected != 1
+            primary_key = dimension_table.to_s.camelize.constantize.primary_key.to_sym rescue :id
+            q = "DELETE FROM #{dimension_table} WHERE #{primary_key} = #{original_record[primary_key]}"
+            connection.delete(q)
             
             ETL::Engine.logger.debug "expiring original record"
             original_record[scd_end_date_field] = @timestamp
