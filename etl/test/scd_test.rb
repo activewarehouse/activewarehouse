@@ -24,10 +24,9 @@ class ScdTest < Test::Unit::TestCase
   end
   
   def test_type_1_run_2_deletes_old_record
-    # TODO: make this pass
-    # do_type_1_run(1)
-    # do_type_1_run(2)
-    # assert_equal 1, count_bobs, "new record created, but old not deleted: #{find_bobs.inspect}"
+    do_type_1_run(1)
+    do_type_1_run(2)
+    assert_equal 1, count_bobs, "new record created, but old not deleted: #{find_bobs.inspect}"
   end
   
   def test_type_1_run_2_updates_address

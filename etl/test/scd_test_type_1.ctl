@@ -18,14 +18,17 @@ transform :end_date, :default, :default_value => '9999-12-31 00:00:00'
 
 destination :out, {
   :file => 'output/scd_test_type_1.txt',
+  :natural_key => [:first_name, :last_name],
   :scd => {
-    :type => 1
-  }
+    :type => 1,
+    :dimension_target => :data_warehouse,
+    :dimension_table => 'person_dimension'
+  },
+  :scd_fields => [:address, :city, :state, :zip_code]
 }, 
 {
   :order => [
-    :id, :first_name, :last_name, :address, :city, :state, :zip_code,
-    :effective_date, :end_date
+    :id, :first_name, :last_name, :address, :city, :state, :zip_code, :effective_date, :end_date
   ],
   :virtual => {
     :id => ETL::Generator::SurrogateKeyGenerator.new(:target => :data_warehouse, :table => 'person_dimension')

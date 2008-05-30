@@ -300,11 +300,7 @@ module ETL #:nodoc:
           
           if original_record = preexisting_row(row)
             # If there is no truncate then the row will exist twice in the database
-            ETL::Engine.logger.debug "deleting old row"
-            
-            primary_key = dimension_table.to_s.camelize.constantize.primary_key.to_sym rescue :id
-            q = "DELETE FROM #{dimension_table} WHERE #{primary_key} = #{original_record[primary_key]}"
-            connection.delete(q)
+            delete_outdated_record(original_record)
             
             ETL::Engine.logger.debug "expiring original record"
             original_record[scd_end_date_field] = @timestamp
@@ -317,6 +313,11 @@ module ETL #:nodoc:
         elsif scd_type == 1
           # SCD Type 1: only the new row should be added
           ETL::Engine.logger.debug "type 1 SCD"
+
+          if original_record = preexisting_row(row)
+            # If there is no truncate then the row will exist twice in the database
+            delete_outdated_record(original_record)
+          end
         else
           # SCD Type 3: not supported
           ETL::Engine.logger.debug "SCD type #{scd_type} not supported"
@@ -384,6 +385,14 @@ module ETL #:nodoc:
         raise ConfigurationError, "dimension_target setting required" unless dimension_target
         
         @conn = ETL::Engine.connection(dimension_target)
+      end
+      
+      def delete_outdated_record(original_record)
+        ETL::Engine.logger.debug "deleting old row"
+        
+        primary_key = dimension_table.to_s.camelize.constantize.primary_key.to_sym rescue :id
+        q = "DELETE FROM #{dimension_table} WHERE #{primary_key} = #{original_record[primary_key]}"
+        connection.delete(q)
       end
       
       # Save a CRC representation of the row's values.  This can be looked

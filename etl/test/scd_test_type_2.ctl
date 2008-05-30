@@ -11,6 +11,11 @@ source :in, {
   :zip_code
 ]
 
+
+
+
+
+
 destination :out, {
   :file => 'output/scd_test_type_2.txt',
   :natural_key => [:first_name, :last_name],
@@ -19,7 +24,7 @@ destination :out, {
     :dimension_target => :data_warehouse,
     :dimension_table => 'person_dimension'
   },
-  :scd_fields => [:address, :city, :state, :zip_code],
+  :scd_fields => [:address, :city, :state, :zip_code]
 }, 
 {
   :order => [
