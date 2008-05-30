@@ -5,18 +5,32 @@ class ScdTest < Test::Unit::TestCase
     @connection = ETL::Engine.connection(:data_warehouse)
     @connection.delete("DELETE FROM person_dimension")
   end
-  def test_type_1_scd
-    assert_nothing_raised do
-      do_control_processing('scd_test_type_1_run_1.ctl')
-    end
-    lines = lines_for('scd_test_type_1_1.txt')
-    assert_equal "Bob,Smith,200 South Drive,Boston,MA,32123\n", lines.first
+  def test_type_1_scd_inserts_record
+    do_type_1_run(1)
+    # TODO: This is a test bug - if the tests don't run at the correct
+    # time, this timestamp may not match the timestamp used during the
+    # creation of the SCD row
+    timestamp = Time.now
     
-    assert_nothing_raised do
-      do_control_processing('scd_test_type_1_run_2.ctl')
-    end
-    lines = lines_for('scd_test_type_1_2.txt')
-    assert_equal "Bob,Smith,1010 SW 23rd St,Los Angeles,CA,90392\n", lines.first
+    lines = lines_for('scd_test_type_1.txt')
+    assert_equal(
+      "1,Bob,Smith,200 South Drive,Boston,MA,32123,#{timestamp.to_s(:db)},9999-12-31 00:00:00\n",
+      lines.first
+    )
+  end
+  
+  def test_type_1_scd_inserts_updated_record
+    do_type_1_run(2)
+    # TODO: This is a test bug - if the tests don't run at the correct
+    # time, this timestamp may not match the timestamp used during the
+    # creation of the SCD row
+    timestamp = Time.now
+    
+    lines = lines_for('scd_test_type_1.txt')
+    assert_equal(
+      "1,Bob,Smith,1010 SW 23rd St,Los Angeles,CA,90392,#{timestamp.to_s(:db)},9999-12-31 00:00:00\n",
+      lines.first
+    )
   end
   
   def test_type_2_scd
@@ -67,7 +81,14 @@ class ScdTest < Test::Unit::TestCase
   def do_type_2_run(run_num)
     ENV['run_number'] = run_num.to_s
     assert_nothing_raised do
-      do_control_processing("scd_test_type_2.ctl")
+      run_ctl_file("scd_test_type_2.ctl")
+    end
+  end
+  
+  def do_type_1_run(run_num)
+    ENV['run_number'] = run_num.to_s
+    assert_nothing_raised do
+      run_ctl_file("scd_test_type_1.ctl")
     end
   end
   
@@ -75,7 +96,7 @@ class ScdTest < Test::Unit::TestCase
     File.readlines(File.dirname(__FILE__) + "/output/#{file}")
   end
   
-  def do_control_processing(file)
+  def run_ctl_file(file)
     ETL::Engine.process(File.dirname(__FILE__) + "/#{file}")
   end
   
