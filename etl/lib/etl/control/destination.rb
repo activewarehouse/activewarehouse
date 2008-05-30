@@ -315,9 +315,7 @@ module ETL #:nodoc:
             
             buffer << original_record
           end
-          
-          row[scd_effective_date_field] = @timestamp
-          row[scd_end_date_field] = '9999-12-31 00:00:00'
+
         elsif scd_type == 1
           # SCD Type 1: only the new row should be added
           ETL::Engine.logger.debug "type 1 SCD"
@@ -334,8 +332,9 @@ module ETL #:nodoc:
           ETL::Engine.logger.debug "SCD type #{scd_type} not supported"
         end
         
-        ETL::Engine.logger.debug "writing new record"
-        buffer << row
+        # In all cases, the latest, greatest version of the record
+        # should go into the load
+        schedule_new_record(row)
       end
       
       # Do all the steps required when a CRC has *not* changed.  Exact
@@ -358,11 +357,7 @@ module ETL #:nodoc:
         else
           # The record never made it into the database, so add the effective and end date
           # and add it into the bulk load file
-          if scd_type == 2
-            row[scd_effective_date_field] = @timestamp
-            row[scd_end_date_field] = '9999-12-31 00:00:00'
-          end
-          buffer << row
+          schedule_new_record(row)
         end
       end
       
@@ -370,14 +365,8 @@ module ETL #:nodoc:
       # found.  Exact steps depend on what type of SCD we're handling.
       def process_no_crc(row)
         ETL::Engine.logger.debug "CRC missing - record never loaded"
-        # Set the effective and end date fields
-        if scd_type == 2
-          row[scd_effective_date_field] = @timestamp
-          row[scd_end_date_field] = '9999-12-31 00:00:00'
-        end
         
-        # Write the row
-        buffer << row
+        schedule_new_record(row)
       end
       
       # Find the version of this row that already exists in the datawarehouse.
@@ -420,6 +409,15 @@ module ETL #:nodoc:
         
         q = "DELETE FROM #{dimension_table} WHERE #{primary_key} = #{original_record[primary_key]}"
         connection.delete(q)
+      end
+      
+      def schedule_new_record(row)
+        ETL::Engine.logger.debug "writing new record"
+        if scd_type == 2
+          row[scd_effective_date_field] = @timestamp
+          row[scd_end_date_field] = '9999-12-31 00:00:00'
+        end
+        buffer << row
       end
       
       def primary_key
