@@ -296,10 +296,13 @@ module ETL #:nodoc:
         ETL::Engine.logger.debug "CRC does not match"
         
         if scd_type == 2
-          # SCD Type 2: both an old and new row should be added
+          # SCD Type 2: new row should be added and old row should be updated
           ETL::Engine.logger.debug "type 2 SCD"
           
           if original_record = preexisting_row(row)
+            # To update the old row, we delete the version in the database
+            # and insert a new expired version
+            
             # If there is no truncate then the row will exist twice in the database
             delete_outdated_record(original_record)
             
