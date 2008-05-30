@@ -14,7 +14,7 @@ source :in, {
 # NOTE: These are not usually required for a type 1 SCD dimension, but since
 # we're sharing this dimension with the type 2 tests, they're necessary.
 transform :effective_date, :default, :default_value => Time.now.to_s(:db)
-transform :expiration_date, :default, :default_value => '9999-12-31 00:00:00'
+transform :end_date, :default, :default_value => '9999-12-31 00:00:00'
 
 destination :out, {
   :file => 'output/scd_test_type_1.txt',
@@ -25,7 +25,7 @@ destination :out, {
 {
   :order => [
     :id, :first_name, :last_name, :address, :city, :state, :zip_code,
-    :effective_date, :expiration_date
+    :effective_date, :end_date
   ],
   :virtual => {
     :id => ETL::Generator::SurrogateKeyGenerator.new(:target => :data_warehouse, :table => 'person_dimension')
