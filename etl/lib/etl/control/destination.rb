@@ -373,8 +373,6 @@ module ETL #:nodoc:
       def preexisting_row(row)
         raise ConfigurationError, "dimension_table setting required" unless dimension_table
         
-        # TODO: This needs to be sorted correctly to get the *latest*
-        # preexisting row from a type 2 SCD.
         q = "SELECT * FROM #{dimension_table} WHERE #{natural_key_equality_for_row(row)}"
         q << " ORDER BY #{scd_end_date_field} DESC" if scd_type == 2
         
@@ -386,6 +384,8 @@ module ETL #:nodoc:
         result ? ETL::Row[result.symbolize_keys!] : nil
       end
       
+      # Check whether non-scd fields have changed since the last
+      # load of this record.
       def has_non_scd_field_changes?(row, original_record)
         non_scd_fields(row).any? { |non_csd_field| row[non_csd_field] != original_record[non_csd_field] }
       end
@@ -411,6 +411,8 @@ module ETL #:nodoc:
         connection.delete(q)
       end
       
+      # Schedule the latest, greatest version of the row for insertion
+      # into the database
       def schedule_new_record(row)
         ETL::Engine.logger.debug "writing new record"
         if scd_type == 2
@@ -420,6 +422,9 @@ module ETL #:nodoc:
         buffer << row
       end
       
+      # Get the name of the primary key for this table.  Asks the dimension
+      # model class for this information, but if that class hasn't been 
+      # defined, just defaults to :id.
       def primary_key
         return @primary_key if @primary_key
         @primary_key = dimension_table.to_s.camelize.constantize.primary_key.to_sym
