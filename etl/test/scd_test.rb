@@ -209,6 +209,14 @@ class ScdTest < Test::Unit::TestCase
     do_type_2_run_with_only_city_state_zip_scd(2)
     do_type_2_run_with_only_city_state_zip_scd(3)
     assert_los_angeles_address(find_bobs.detect { |bob| 2 == bob.id }, "280 Pine Street")
+  end
+  
+  def test_type_2_no_change_to_non_scd_fields_skips_load
+    do_type_2_run_with_only_city_state_zip_scd(1)
+    do_type_2_run_with_only_city_state_zip_scd(2)
+    do_type_2_run_with_only_city_state_zip_scd(2)
+    lines = lines_for('scd_test_type_2.txt')
+    assert lines.empty?, "scheduled load expected to be empty, was #{lines.size} records"
   end  
   
   def do_type_2_run(run_num)
