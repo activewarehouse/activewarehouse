@@ -49,6 +49,29 @@ class ScdTest < Test::Unit::TestCase
     assert lines.empty?, "scheduled load expected to be empty, was #{lines.size} records"
   end
   
+  def test_type_1_change_once_only_loaded_once
+    do_type_1_run(1)
+    do_type_1_run(2)
+    do_type_1_run(2)
+    assert_equal 1, count_bobs
+    lines = lines_for('scd_test_type_1.txt')
+    assert lines.empty?, "scheduled load expected to be empty, was #{lines.size} records"
+  end
+  
+  def test_type_1_revert_udpates_address_on_new_record
+    do_type_1_run(1)
+    do_type_1_run(2)
+    do_type_1_run(1)
+    assert_boston_address(find_bobs.first)
+  end
+  
+  def test_type_1_revert_keeps_record
+    do_type_1_run(1)
+    do_type_1_run(2)
+    do_type_1_run(1)
+    assert_equal 1, count_bobs
+  end
+  
   def test_type_2_run_1_inserts_record
     do_type_2_run(1)
     assert_equal 1, count_bobs
@@ -142,37 +165,38 @@ class ScdTest < Test::Unit::TestCase
     assert lines.empty?, "scheduled load expected to be empty, was #{lines.size} records"
   end
   
-  # # TODO: Make these pass
-  # def test_type_2_change_once_only_loaded_once
-  #   do_type_2_run(1)
-  #   do_type_2_run(2)
-  #   do_type_2_run(2)
-  #   assert_equal 2, count_bobs
-  # end
-  # 
-  # def test_type_2_revert_inserts_new_record
-  #   do_type_2_run(1)
-  #   do_type_2_run(2)
-  #   do_type_2_run(1)
-  #   assert_equal 3, count_bobs
-  # end
-  # 
-  # def test_type_2_revert_udpates_address_on_new_record
-  #   do_type_2_run(1)
-  #   do_type_2_run(2)
-  #   do_type_2_run(1)
-  #   assert_boston_address(find_bobs.detect { |bob| 3 == bob.id })
-  # end
-  # 
-  # def test_type_2_scd_change_deletes_only_one_row
-  #   do_type_2_run(1) # put first version in
-  #   do_type_2_run(2) # put second version in
-  #   # Two records right now
-  #   assert_equal 2, count_bobs
-  #   do_type_2_run(1) # put third version in (same as first version, but that's irrelevant)
-  #   # was failing because first and second versions were being deleted.
-  #   assert_equal 3, count_bobs
-  # end
+  def test_type_2_change_once_only_loaded_once
+    do_type_2_run(1)
+    do_type_2_run(2)
+    do_type_2_run(2)
+    assert_equal 2, count_bobs
+    lines = lines_for('scd_test_type_2.txt')
+    assert lines.empty?, "scheduled load expected to be empty, was #{lines.size} records"
+  end
+  
+  def test_type_2_revert_inserts_new_record
+    do_type_2_run(1)
+    do_type_2_run(2)
+    do_type_2_run(1)
+    assert_equal 3, count_bobs
+  end
+  
+  def test_type_2_revert_udpates_address_on_new_record
+    do_type_2_run(1)
+    do_type_2_run(2)
+    do_type_2_run(1)
+    assert_boston_address(find_bobs.detect { |bob| 3 == bob.id })
+  end
+  
+  def test_type_2_scd_change_deletes_only_one_row
+    do_type_2_run(1) # put first version in
+    do_type_2_run(2) # put second version in
+    # Two records right now
+    assert_equal 2, count_bobs
+    do_type_2_run(1) # put third version in (same as first version, but that's irrelevant)
+    # was failing because first and second versions were being deleted.
+    assert_equal 3, count_bobs
+  end
   
   def do_type_2_run(run_num)
     ENV['run_number'] = run_num.to_s

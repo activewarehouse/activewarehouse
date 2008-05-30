@@ -195,6 +195,7 @@ module ETL #:nodoc:
         if last_crc = last_recorded_crc_for_row(row)
           if last_crc != crc_for_row(row)
             process_crc_change(row)
+            save_crc(row)
           else
             process_crc_match(row)
           end
