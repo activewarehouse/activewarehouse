@@ -263,7 +263,7 @@ module ETL #:nodoc:
       # values.
       def crc_for_row(row)
         s = scd_fields(row).inject("") { |str, field| str + row[field].to_s }
-        Zlib.crc32(s)
+        Zlib.crc32(s).to_s
       end
       
       # Helper for turning an array of natural key values into a
@@ -317,6 +317,7 @@ module ETL #:nodoc:
           if original_record = preexisting_row(row)
             # Copy primary key over from original version of record
             row[primary_key] = original_record[primary_key]
+            
             # If there is no truncate then the row will exist twice in the database
             delete_outdated_record(original_record)
           end
