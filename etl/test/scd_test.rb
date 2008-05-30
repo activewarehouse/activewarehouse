@@ -37,10 +37,9 @@ class ScdTest < Test::Unit::TestCase
   end
   
   def test_type_1_run_2_keeps_id
-    # TODO: make this pass
-    # do_type_1_run(1)
-    # do_type_1_run(2)
-    # assert_equal 1, find_bobs.first.id
+    do_type_1_run(1)
+    do_type_1_run(2)
+    assert_equal 1, find_bobs.first.id
   end
   
   def test_type_2_run_1_inserts_record

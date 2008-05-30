@@ -315,6 +315,8 @@ module ETL #:nodoc:
           ETL::Engine.logger.debug "type 1 SCD"
 
           if original_record = preexisting_row(row)
+            # Copy primary key over from original version of record
+            row[primary_key] = original_record[primary_key]
             # If there is no truncate then the row will exist twice in the database
             delete_outdated_record(original_record)
           end
@@ -387,12 +389,23 @@ module ETL #:nodoc:
         @conn = ETL::Engine.connection(dimension_target)
       end
       
+      # Utility for removing a row that has outdated information.  Note
+      # that this deletes directly from the database, even if this is a file
+      # destination.  It needs to do this because you can't do deletes in a 
+      # bulk load.
       def delete_outdated_record(original_record)
         ETL::Engine.logger.debug "deleting old row"
         
-        primary_key = dimension_table.to_s.camelize.constantize.primary_key.to_sym rescue :id
         q = "DELETE FROM #{dimension_table} WHERE #{primary_key} = #{original_record[primary_key]}"
         connection.delete(q)
+      end
+      
+      def primary_key
+        return @primary_key if @primary_key
+        @primary_key = dimension_table.to_s.camelize.constantize.primary_key.to_sym
+      rescue NameError => e
+        ETL::Engine.logger.debug "couldn't get primary_key from dimension model class, using default :id"
+        @primary_key = :id
       end
       
       # Save a CRC representation of the row's values.  This can be looked
