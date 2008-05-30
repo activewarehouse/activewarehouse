@@ -77,10 +77,16 @@ class ScdTest < Test::Unit::TestCase
     assert_equal 2, count_bobs
   end
   
-  def test_type_2_run_2_keeps_id
+  def test_type_2_run_2_keeps_primary_key_of_original_version
     do_type_2_run(1)
     do_type_2_run(2)
-    assert_equal [1, 2], find_bobs.map(&:id).sort
+    assert_not_nil find_bobs.detect { |bob| 1 == bob.id }
+  end
+  
+  def test_type_2_run_2_increments_primary_key_for_new_version
+    do_type_2_run(1)
+    do_type_2_run(2)
+    assert_not_nil find_bobs.detect { |bob| 2 == bob.id }
   end
   
   def test_type_2_run_2_expires_old_record
