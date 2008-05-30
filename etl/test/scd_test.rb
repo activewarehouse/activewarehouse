@@ -197,11 +197,30 @@ class ScdTest < Test::Unit::TestCase
     assert_equal 3, count_bobs
   end
   
+  def test_type_2_non_scd_field_changes_dont_create_new_record
+    do_type_2_run_with_only_city_state_zip_scd(1)
+    do_type_2_run_with_only_city_state_zip_scd(2)
+    do_type_2_run_with_only_city_state_zip_scd(3)
+    assert_equal 2, count_bobs
+  end
+  
+  def test_type_2_non_scd_fields_treated_like_type_1_fields
+    do_type_2_run_with_only_city_state_zip_scd(1)
+    do_type_2_run_with_only_city_state_zip_scd(2)
+    do_type_2_run_with_only_city_state_zip_scd(3)
+    assert_los_angeles_address(find_bobs.detect { |bob| 2 == bob.id }, "280 Pine Street")
+  end  
+  
   def do_type_2_run(run_num)
     ENV['run_number'] = run_num.to_s
     assert_nothing_raised do
       run_ctl_file("scd_test_type_2.ctl")
     end
+  end
+  
+  def do_type_2_run_with_only_city_state_zip_scd(run_num)
+    ENV['type_2_scd_fields'] = Marshal.dump([:city, :state, :zip_code])
+    do_type_2_run(run_num)
   end
   
   def do_type_1_run(run_num)
@@ -245,17 +264,17 @@ class ScdTest < Test::Unit::TestCase
     DateTime.parse(Time.now.to_s(:db))
   end
   
-  def assert_boston_address(bob)
-    assert_equal "200 South Drive", bob['address'], "expected Boston street: #{bob.inspect}"
-    assert_equal "Boston", bob['city'], "expected Boston city: #{bob.inspect}"
-    assert_equal "MA", bob['state'], "expected Boston state: #{bob.inspect}"
-    assert_equal "32123", bob['zip_code'], "expected Boston zip: #{bob.inspect}"
+  def assert_boston_address(bob, street = "200 South Drive")
+    assert_equal street, bob['address'], bob.inspect
+    assert_equal "Boston", bob['city'], bob.inspect
+    assert_equal "MA", bob['state'], bob.inspect
+    assert_equal "32123", bob['zip_code'], bob.inspect
   end
   
-  def assert_los_angeles_address(bob)
-    assert_equal "1010 SW 23rd St", bob['address'], "expected Los Angeles street: #{bob.inspect}"
-    assert_equal "Los Angeles", bob['city'], "expected Los Angeles city: #{bob.inspect}"
-    assert_equal "CA", bob['state'], "expected Los Angeles state: #{bob.inspect}"
-    assert_equal "90392", bob['zip_code'], "expected Los Angeles zip: #{bob.inspect}"    
+  def assert_los_angeles_address(bob, street = "1010 SW 23rd St")
+    assert_equal street, bob['address'], bob.inspect
+    assert_equal "Los Angeles", bob['city'], bob.inspect
+    assert_equal "CA", bob['state'], bob.inspect
+    assert_equal "90392", bob['zip_code'], bob.inspect
   end
 end

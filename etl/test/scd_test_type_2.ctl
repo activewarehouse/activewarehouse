@@ -24,7 +24,7 @@ destination :out, {
     :dimension_target => :data_warehouse,
     :dimension_table => 'person_dimension'
   },
-  :scd_fields => [:address, :city, :state, :zip_code]
+  :scd_fields => ENV['type_2_scd_fields'] ? Marshal.load(ENV['type_2_scd_fields']) : [:address, :city, :state, :zip_code]
 }, 
 {
   :order => [

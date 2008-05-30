@@ -137,6 +137,10 @@ module ETL #:nodoc:
         @scd_fields ||= configuration[:scd_fields] || row.keys
       end
       
+      def non_scd_fields(row)
+        @non_csd_fields ||= row.keys - natural_key - scd_fields(row) - [primary_key, scd_effective_date_field, scd_end_date_field]
+      end
+      
       def scd?
         !configuration[:scd].nil?
       end
@@ -339,17 +343,25 @@ module ETL #:nodoc:
       def process_crc_match(row)
         ETL::Engine.logger.debug "CRC matches"
         
-        # TODO: This should only be run for type 2 SCDs
         if original_record = preexisting_row(row)
-          # This was necessary when truncating and then loading, however I
-          # am getting reluctant to having the ETL process do the truncation
-          # as part of the bulk load, favoring using a preprocessor instead.
-          # buffer << ETL::Row[result.symbolize_keys!]
+          if scd_type == 2 && has_non_scd_field_changes?(row, original_record)
+            # Copy primary key over from original version of record
+            row[primary_key] = original_record[primary_key]
+
+            # If there is no truncate then the row will exist twice in the database
+            delete_outdated_record(original_record)
+            
+            buffer << row
+          else
+            # The record is totally the same, so skip it
+          end
         else
           # The record never made it into the database, so add the effective and end date
           # and add it into the bulk load file
-          row[scd_effective_date_field] = @timestamp
-          row[scd_end_date_field] = '9999-12-31 00:00:00'
+          if scd_type == 2
+            row[scd_effective_date_field] = @timestamp
+            row[scd_end_date_field] = '9999-12-31 00:00:00'
+          end
           buffer << row
         end
       end
@@ -375,6 +387,7 @@ module ETL #:nodoc:
         # TODO: This needs to be sorted correctly to get the *latest*
         # preexisting row from a type 2 SCD.
         q = "SELECT * FROM #{dimension_table} WHERE #{natural_key_equality_for_row(row)}"
+        q << " ORDER BY #{scd_end_date_field} DESC" if scd_type == 2
         
         #puts "looking for original record"
         result = connection.select_one(q)
@@ -382,6 +395,10 @@ module ETL #:nodoc:
         #puts "Result: #{result.inspect}"
         
         result ? ETL::Row[result.symbolize_keys!] : nil
+      end
+      
+      def has_non_scd_field_changes?(row, original_record)
+        non_scd_fields(row).any? { |non_csd_field| row[non_csd_field] != original_record[non_csd_field] }
       end
       
       # Grab, or re-use, a database connection for running queries directly
