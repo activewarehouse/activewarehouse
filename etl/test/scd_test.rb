@@ -5,7 +5,7 @@ class ScdTest < Test::Unit::TestCase
     @connection = ETL::Engine.connection(:data_warehouse)
     @connection.delete("DELETE FROM person_dimension")
     
-    @end_of_time = '9999-12-31 00:00:00'
+    @end_of_time = DateTime.parse('9999-12-31 00:00:00')
   end
   
   def test_type_1_run_1_inserts_record
@@ -92,7 +92,7 @@ class ScdTest < Test::Unit::TestCase
     # TODO: This is a test bug - if the tests don't run at the correct
     # time, this timestamp may not match the timestamp used during the
     # creation of the SCD row
-    assert_equal Time.now.to_s(:db), find_bobs.first.effective_date, "failure might be a test bug - see test notes"
+    assert_equal current_datetime, find_bobs.first.effective_date, "failure might be a test bug - see test notes"
   end
   
   def test_type_2_run_1_sets_end_date
@@ -122,10 +122,9 @@ class ScdTest < Test::Unit::TestCase
     do_type_2_run(1)
     do_type_2_run(2)
 
-    # TODO: This is a test bug - if the tests don't run at the correct
-    # time, this timestamp may not match the timestamp used during the
-    # creation of the SCD row
-    assert_equal Time.now.to_s(:db), find_bobs.detect { |bob| 1 == bob.id }.end_date, "failure might be a test bug - see test notes"
+    original_bob = find_bobs.detect { |bob| 1 == bob.id }
+    new_bob = find_bobs.detect { |bob| 2 == bob.id }
+    assert_equal new_bob.effective_date, original_bob.end_date
   end
   
   def test_type_2_run_2_keeps_address_for_expired_record
@@ -149,10 +148,10 @@ class ScdTest < Test::Unit::TestCase
     # TODO: This is a test bug - if the tests don't run at the correct
     # time, this timestamp may not match the timestamp used during the
     # creation of the SCD row
-    assert_equal Time.now.to_s(:db), find_bobs.detect { |bob| 2 == bob.id }.effective_date, "failure might be a test bug - see test notes"    
+    assert_equal current_datetime, find_bobs.detect { |bob| 2 == bob.id }.effective_date, "failure might be a test bug - see test notes"    
   end
   
-  def test_type_2_run_2_activates_sets_end_date_for_new_record
+  def test_type_2_run_2_sets_end_date_for_new_record
     do_type_2_run(1)
     do_type_2_run(2)
     assert_equal @end_of_time, find_bobs.detect { |bob| 2 == bob.id }.end_date
@@ -233,13 +232,17 @@ class ScdTest < Test::Unit::TestCase
         self["id"].to_i
       end
       def bob.effective_date
-        self["effective_date"]
+        DateTime.parse(self["effective_date"])
       end
       def bob.end_date
-        self["end_date"]
+        DateTime.parse(self["end_date"])
       end
     end
     bobs
+  end
+  
+  def current_datetime
+    DateTime.parse(Time.now.to_s(:db))
   end
   
   def assert_boston_address(bob)
