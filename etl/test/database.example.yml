@@ -3,7 +3,7 @@ operational_database:
   username: root
   host: localhost
   database: etl_unittest
-  encoding:utf8
+  encoding: utf8
 data_warehouse:
   adapter: mysql
   username: root
