@@ -293,7 +293,8 @@ module ETL #:nodoc:
       
       ETL::Engine.job = ETL::Execution::Job.create!(
         :control_file => control.file, 
-        :status => 'executing'
+        :status => 'executing',
+        :batch_id => ETL::Engine.batch ? ETL::Engine.batch.id : nil
       )
       
       execute_dependencies(control)
