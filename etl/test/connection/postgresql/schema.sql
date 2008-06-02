@@ -28,7 +28,8 @@ create table person_dimension (
   state character varying(50),
   zip_code character varying(20),
   effective_date timestamp without time zone,
-  end_date timestamp without time zone
+  end_date timestamp without time zone,
+  latest_version boolean not null
 );
 
 drop table truncate_test;

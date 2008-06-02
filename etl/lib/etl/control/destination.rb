@@ -138,7 +138,8 @@ module ETL #:nodoc:
       end
       
       def non_scd_fields(row)
-        @non_csd_fields ||= row.keys - natural_key - scd_fields(row) - [primary_key, scd_effective_date_field, scd_end_date_field]
+        @non_csd_fields ||= row.keys - natural_key - scd_fields(row) -
+          [primary_key, scd_effective_date_field, scd_end_date_field, scd_latest_version_field]
       end
       
       def scd?
@@ -159,6 +160,12 @@ module ETL #:nodoc:
       # 'end_date'.
       def scd_end_date_field
         configuration[:scd][:end_date_field] || :end_date if scd?
+      end
+      
+      # Get the Slowly Changing Dimension latest version field. Defaults to
+      # 'latest_version'.
+      def scd_latest_version_field
+        configuration[:scd][:latest_version_field] || :latest_version if scd?
       end
       
       # Return the natural key field names, defaults to []
@@ -322,6 +329,7 @@ module ETL #:nodoc:
             
             ETL::Engine.logger.debug "expiring original record"
             original_record[scd_end_date_field] = @timestamp
+            original_record[scd_latest_version_field] = false
             
             buffer << original_record
           end
@@ -354,8 +362,11 @@ module ETL #:nodoc:
         
         if original_record = preexisting_row(row)
           if scd_type == 2 && has_non_scd_field_changes?(row, original_record)
-            # Copy primary key over from original version of record
-            row[primary_key] = original_record[primary_key]
+            # Copy important data over from original version of record
+            row[primary_key]              = original_record[primary_key]
+            row[scd_end_date_field]       = original_record[scd_end_date_field]
+            row[scd_effective_date_field] = original_record[scd_effective_date_field]
+            row[scd_latest_version_field] = original_record[scd_latest_version_field]
 
             # If there is no truncate then the row will exist twice in the database
             delete_outdated_record(original_record)
@@ -382,7 +393,7 @@ module ETL #:nodoc:
       # Find the version of this row that already exists in the datawarehouse.
       def preexisting_row(row)
         q = "SELECT * FROM #{dimension_table} WHERE #{natural_key_equality_for_row(row)}"
-        q << " ORDER BY #{scd_end_date_field} DESC" if scd_type == 2
+        q << " AND latest_version" if scd_type == 2
         
         #puts "looking for original record"
         result = connection.select_one(q)
@@ -422,6 +433,7 @@ module ETL #:nodoc:
         if scd_type == 2
           row[scd_effective_date_field] = @timestamp
           row[scd_end_date_field] = '9999-12-31 00:00:00'
+          row[scd_latest_version_field] = true
         end
         buffer << row
       end

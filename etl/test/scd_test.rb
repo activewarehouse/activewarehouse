@@ -99,7 +99,12 @@ class ScdTest < Test::Unit::TestCase
     do_type_2_run(1)
     assert_equal @end_of_time, find_bobs.first.end_date
   end
-
+  
+  def test_type_2_run_1_sets_latest_version
+    do_type_2_run(1)
+    assert find_bobs.first.latest_version?
+  end
+  
   def test_type_2_run_2_inserts_new_record
     do_type_2_run(1)
     do_type_2_run(2)
@@ -157,6 +162,16 @@ class ScdTest < Test::Unit::TestCase
     assert_equal @end_of_time, find_bobs.detect { |bob| 2 == bob.id }.end_date
   end
   
+  def test_type_2_run_2_shifts_latest_version
+    do_type_2_run(1)
+    do_type_2_run(2)
+
+    original_bob = find_bobs.detect { |bob| 1 == bob.id }
+    new_bob = find_bobs.detect { |bob| 2 == bob.id }
+    assert !original_bob.latest_version?
+    assert new_bob.latest_version?
+  end
+  
   def test_type_2_no_change_skips_load
     do_type_2_run(1)
     do_type_2_run(1)
@@ -197,11 +212,39 @@ class ScdTest < Test::Unit::TestCase
     assert_equal 3, count_bobs
   end
   
-  def test_type_2_non_scd_field_changes_dont_create_new_record
+  def test_type_2_non_scd_field_changes_dont_create_extra_record
     do_type_2_run_with_only_city_state_zip_scd(1)
     do_type_2_run_with_only_city_state_zip_scd(2)
     do_type_2_run_with_only_city_state_zip_scd(3)
     assert_equal 2, count_bobs
+  end
+  
+  def test_type_2_non_scd_field_changes_keep_id
+    do_type_2_run_with_only_city_state_zip_scd(1)
+    do_type_2_run_with_only_city_state_zip_scd(2)
+    do_type_2_run_with_only_city_state_zip_scd(3)
+    
+    assert_not_nil find_bobs.detect { |bob| 2 == bob.id }
+  end
+  
+  def test_type_2_non_scd_field_changes_keep_dates
+    do_type_2_run_with_only_city_state_zip_scd(1)
+    do_type_2_run_with_only_city_state_zip_scd(2)
+    old_bob = find_bobs.detect { |bob| 2 == bob.id }
+
+    do_type_2_run_with_only_city_state_zip_scd(3)
+    new_bob = find_bobs.detect { |bob| 2 == bob.id }
+    
+    assert_equal old_bob.end_date, new_bob.end_date
+    assert_equal old_bob.effective_date, new_bob.effective_date
+  end
+  
+  def test_type_2_non_scd_field_changes_keep_latest_version
+    do_type_2_run_with_only_city_state_zip_scd(1)
+    do_type_2_run_with_only_city_state_zip_scd(2)
+    do_type_2_run_with_only_city_state_zip_scd(3)
+    
+    assert find_bobs.detect { |bob| 2 == bob.id }.latest_version?
   end
   
   def test_type_2_non_scd_fields_treated_like_type_1_fields
@@ -263,6 +306,9 @@ class ScdTest < Test::Unit::TestCase
       end
       def bob.end_date
         DateTime.parse(self["end_date"])
+      end
+      def bob.latest_version?
+        ActiveRecord::ConnectionAdapters::Column.value_to_boolean(self["latest_version"])
       end
     end
     bobs
