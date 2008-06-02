@@ -290,8 +290,14 @@ module ETL #:nodoc:
       # Helper for generating the SQL where clause that allows searching
       # by a natural key
       def natural_key_equality_for_row(row)
-        # TODO: sanitize SQL here?
-        natural_key.collect { |nk| "#{nk} = '#{row[nk]}'" }.join(" AND ")
+        statement = []
+        values = []
+        natural_key.each do |nk|
+          statement << "#{nk} = ?"
+          values << row[nk]
+        end
+        statement = statement.join(" AND ")
+        ActiveRecord::Base.send(:sanitize_sql, [statement, *values])
       end
       
       # Do all the steps required when a CRC *has* changed.  Exact steps
