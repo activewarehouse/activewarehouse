@@ -168,12 +168,16 @@ module ETL #:nodoc:
       
       # Get the dimension table if specified
       def dimension_table
-        ETL::Engine.table(configuration[:scd][:dimension_table], dimension_target) if scd?
+        @dimension_table ||= if scd?
+          ETL::Engine.table(configuration[:scd][:dimension_table], dimension_target) or raise ConfigurationError, "dimension_table setting required" 
+        end
       end
       
       # Get the dimension target if specified
       def dimension_target
-        configuration[:scd][:dimension_target] if scd?
+        @dimension_target ||= if scd?
+          configuration[:scd][:dimension_target] or raise ConfigurationError, "dimension_target setting required"
+        end
       end
       
       # Process a row to determine the change type
@@ -377,8 +381,6 @@ module ETL #:nodoc:
       
       # Find the version of this row that already exists in the datawarehouse.
       def preexisting_row(row)
-        raise ConfigurationError, "dimension_table setting required" unless dimension_table
-        
         q = "SELECT * FROM #{dimension_table} WHERE #{natural_key_equality_for_row(row)}"
         q << " ORDER BY #{scd_end_date_field} DESC" if scd_type == 2
         
@@ -399,11 +401,7 @@ module ETL #:nodoc:
       # Grab, or re-use, a database connection for running queries directly
       # during the destination processing.
       def connection
-        return @conn if @conn
-        
-        raise ConfigurationError, "dimension_target setting required" unless dimension_target
-        
-        @conn = ETL::Engine.connection(dimension_target)
+        @conn ||= ETL::Engine.connection(dimension_target)
       end
       
       # Utility for removing a row that has outdated information.  Note
