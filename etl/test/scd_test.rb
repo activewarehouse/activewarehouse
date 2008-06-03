@@ -23,6 +23,11 @@ class ScdTest < Test::Unit::TestCase
     assert_equal 1, find_bobs.first.id
   end
   
+  def test_type_1_run_1_stores_crc
+    do_type_1_run(1)
+    assert_equal 1, type_1_crc_records.size
+  end
+  
   def test_type_1_run_2_deletes_old_record
     do_type_1_run(1)
     do_type_1_run(2)
@@ -40,6 +45,12 @@ class ScdTest < Test::Unit::TestCase
     do_type_1_run(1)
     do_type_1_run(2)
     assert_equal 1, find_bobs.first.id
+  end
+  
+  def test_type_1_run_2_doesnt_create_extra_crc_record
+    do_type_1_run(1)
+    do_type_1_run(2)
+    assert_equal 1, type_1_crc_records.size
   end
   
   def test_type_1_no_change_skips_load
@@ -103,6 +114,11 @@ class ScdTest < Test::Unit::TestCase
   def test_type_2_run_1_sets_latest_version
     do_type_2_run(1)
     assert find_bobs.first.latest_version?
+  end
+  
+  def test_type_2_run_1_stores_crc
+    do_type_2_run(1)
+    assert_equal 1, type_2_crc_records.size
   end
   
   def test_type_2_run_2_inserts_new_record
@@ -171,6 +187,13 @@ class ScdTest < Test::Unit::TestCase
     assert !original_bob.latest_version?
     assert new_bob.latest_version?
   end
+  
+  def test_type_2_run_2_doesnt_create_extra_crc_record
+    do_type_2_run(1)
+    do_type_2_run(2)
+    assert_equal 1, type_2_crc_records.size
+  end
+  
   
   def test_type_2_no_change_skips_load
     do_type_2_run(1)
@@ -316,6 +339,14 @@ class ScdTest < Test::Unit::TestCase
   
   def current_datetime
     DateTime.parse(Time.now.to_s(:db))
+  end
+  
+  def type_1_crc_records
+    ETL::Execution::Record.find_all_by_control_file_and_natural_key(File.dirname(__FILE__) + "/scd_test_type_1.ctl", "Bob|Smith")
+  end
+  
+  def type_2_crc_records
+    ETL::Execution::Record.find_all_by_control_file_and_natural_key(File.dirname(__FILE__) + "/scd_test_type_2.ctl", "Bob|Smith")
   end
   
   def assert_boston_address(bob, street = "200 South Drive")

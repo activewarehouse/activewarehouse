@@ -293,9 +293,10 @@ module ETL #:nodoc:
       
       # Looks up the CRC recorded from the last time there was a change
       def last_recorded_crc_for_row(row)
-        crc_record = ETL::Execution::Record.find_by_control_file_and_natural_key(control.file, joined_natural_key_for_row(row))
+        @crc_record = ETL::Execution::Record.find_or_initialize_by_control_file_and_natural_key(
+          control.file, joined_natural_key_for_row(row))
         
-        crc_record ? crc_record.crc : nil
+        @crc_record.crc
       end
       
       # Helper for generating the SQL where clause that allows searching
@@ -455,12 +456,9 @@ module ETL #:nodoc:
         # Record the record
         if ETL::Engine.job # only record the execution if there is a job
           ETL::Execution::Record.time_spent += Benchmark.realtime do
-            ETL::Execution::Record.create!(
-              :control_file => control.file,
-              :natural_key => joined_natural_key_for_row(row),
-              :crc => crc_for_row(row),
-              :job_id => ETL::Engine.job.id
-            )
+            @crc_record.crc = crc_for_row(row)
+            @crc_record.job_id = ETL::Engine.job.id
+            @crc_record.save!
           end
         end
       end
