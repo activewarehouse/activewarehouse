@@ -11,20 +11,21 @@ source :in, {
   :zip_code
 ]
 
-
-
-
-
+# NOTE: These are not usually required for a type 1 SCD dimension, but since
+# we're sharing this table with the type 2 tests, they're necessary.
+transform :effective_date, :default, :default_value => Time.now.to_s(:db)
+transform :end_date, :default, :default_value => '9999-12-31 00:00:00'
+transform :latest_version, :default, :default_value => true
 
 destination :out, {
-  :file => 'output/scd_test_type_2.txt',
+  :file => 'output/scd_test_type_1.txt',
   :natural_key => [:first_name, :last_name],
   :scd => {
-    :type => 2,
+    :type => 1,
     :dimension_target => :data_warehouse,
     :dimension_table => 'person_dimension'
   },
-  :scd_fields => ENV['type_2_scd_fields'] ? Marshal.load(ENV['type_2_scd_fields']) : [:address, :city, :state, :zip_code]
+  :scd_fields => [:address, :city, :state, :zip_code]
 }, 
 {
   :order => [
@@ -36,7 +37,7 @@ destination :out, {
 }
 
 post_process :bulk_import, {
-  :file => 'output/scd_test_type_2.txt',
+  :file => 'output/scd_test_type_1.txt',
   :target => :data_warehouse,
   :table => 'person_dimension'
 }
