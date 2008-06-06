@@ -22,7 +22,8 @@ create table person_dimension (
   state char(50),
   zip_code char(20),
   effective_date datetime,
-  end_date datetime
+  end_date datetime,
+  latest_version boolean not null
 );
 
 drop table if exists truncate_test;

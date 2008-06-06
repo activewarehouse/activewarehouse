@@ -8,6 +8,7 @@ require 'flexmock/test_unit'
 
 ETL::Engine.init(:config => File.dirname(__FILE__) + '/database.yml')
 ETL::Engine.logger = Logger.new(STDOUT)
+# ETL::Engine.logger.level = Logger::DEBUG
 ETL::Engine.logger.level = Logger::FATAL
 
 db = ENV['DB'] ||= 'native_mysql'
