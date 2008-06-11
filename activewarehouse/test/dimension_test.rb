@@ -71,8 +71,8 @@ class DimensionTest < Test::Unit::TestCase
   end
   def test_available_child_values
     assert_equal ["2001", "2002", "2003", "2004", "2005", "2006", "2007", "2008"], DateDimension.available_child_values(:cy, [])
-    assert_equal ['Q1', 'Q2', 'Q3', 'Q4'], DateDimension.available_child_values(:cy, [2006])
-    assert_equal ['January', 'February', 'March'], DateDimension.available_child_values(:cy, [2006, 'Q1'])
+    assert_equal ['Q1', 'Q2', 'Q3', 'Q4'], DateDimension.available_child_values(:cy, ['2006'])
+    assert_equal ['January', 'February', 'March'], DateDimension.available_child_values(:cy, ['2006', 'Q1'])
   end
   def test_available_values_tree
     root = StoreDimension.available_values_tree(:location)
