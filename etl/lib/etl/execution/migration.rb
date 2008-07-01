@@ -27,7 +27,7 @@ module ETL #:nodoc:
         
         # Get the final target version number
         def target
-          3
+          4
         end
         
         private
@@ -61,6 +61,10 @@ module ETL #:nodoc:
           end
           connection.add_column :jobs, :batch_id, :integer
           connection.add_index :jobs, :batch_id
+        end
+        
+        def migration_4
+          connection.drop_table :records
         end
       
         # Update the schema info table, setting the version value

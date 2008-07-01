@@ -1,5 +1,3 @@
-require 'zlib'
-
 module ETL #:nodoc:
   module Control #:nodoc:
     # Base class for destinations.
@@ -130,10 +128,6 @@ module ETL #:nodoc:
       # Uses the scd_fields specified in the configuration.  If that's
       # missing, uses all of the row's fields.
       def scd_fields(row)
-        # The caching is critical here - it ensures that row.keys is only 
-        # called once.  That means we always get the fields in the same order.
-        # Since these values will be used to calculate a CRC, it's important
-        # that they always come in the same order.
         @scd_fields ||= configuration[:scd_fields] || row.keys
       end
       
@@ -201,22 +195,20 @@ module ETL #:nodoc:
         
         @timestamp = Time.now
 
-        # See if the crc for the current row (and scd_fields) matches
-        # the last ETL::Execution::Record with the same natural key.
-        # If they match then throw away this row (no need to process).
-        # If they do not match then the record is an 'update'. If the
-        # record doesn't exist then it is an 'insert'        
-        ETL::Engine.logger.debug "Checking record for CRC change"
-        if last_crc = last_recorded_crc_for_row(row)
-          if last_crc != crc_for_row(row)
-            process_crc_change(row)
-            save_crc(row)
+        # See if the scd_fields of the current record have changed
+        # from the last time this record was loaded into the data
+        # warehouse. If they match then throw away this row (no need
+        # to process). If they do not match then the record is an
+        # 'update'. If the record doesn't exist then it is an 'insert'
+        ETL::Engine.logger.debug "Checking record for SCD change"
+        if @existing_row = preexisting_row(row)
+          if has_scd_field_changes?(row)
+            process_scd_change(row)
           else
-            process_crc_match(row)
+            process_scd_match(row)
           end
         else
-          process_no_crc(row)
-          save_crc(row)
+          schedule_new_record(row)
         end
       end
       
@@ -274,31 +266,6 @@ module ETL #:nodoc:
         natural_key.any? && natural_key.all? { |key| row.has_key?(key) }
       end
       
-      # Calculates a CRC for the given row.  Only uses the scd_fields,
-      # if provided.  Defaults to doing a crc on all the field's
-      # values.
-      def crc_for_row(row)
-        s = scd_fields(row).inject("") { |str, field| str + row[field].to_s }
-        Zlib.crc32(s).to_s
-      end
-      
-      # Helper for turning an array of natural key values into a
-      # single value.  Used by CRC recorder.  Example: If the table's
-      # natural key is first_name, last_name, and a specific user's is
-      # {:first_name => "Joe", :last_name => "Smith", :birth_date =>
-      # 3.years.ago} this helper will return "Joe|Smith"
-      def joined_natural_key_for_row(row)
-        natural_key.collect{|k|row[k].to_s}.join('|')
-      end
-      
-      # Looks up the CRC recorded from the last time there was a change
-      def last_recorded_crc_for_row(row)
-        @crc_record = ETL::Execution::Record.find_or_initialize_by_control_file_and_natural_key(
-          control.file, joined_natural_key_for_row(row))
-        
-        @crc_record.crc
-      end
-      
       # Helper for generating the SQL where clause that allows searching
       # by a natural key
       def natural_key_equality_for_row(row)
@@ -312,40 +279,36 @@ module ETL #:nodoc:
         ActiveRecord::Base.send(:sanitize_sql, [statement, *values])
       end
       
-      # Do all the steps required when a CRC *has* changed.  Exact steps
+      # Do all the steps required when a SCD *has* changed.  Exact steps
       # depend on what type of SCD we're handling.
-      def process_crc_change(row)
-        ETL::Engine.logger.debug "CRC does not match"
+      def process_scd_change(row)
+        ETL::Engine.logger.debug "SCD fields do not match"
         
         if scd_type == 2
           # SCD Type 2: new row should be added and old row should be updated
           ETL::Engine.logger.debug "type 2 SCD"
           
-          if original_record = preexisting_row(row)
-            # To update the old row, we delete the version in the database
-            # and insert a new expired version
-            
-            # If there is no truncate then the row will exist twice in the database
-            delete_outdated_record(original_record)
-            
-            ETL::Engine.logger.debug "expiring original record"
-            original_record[scd_end_date_field] = @timestamp
-            original_record[scd_latest_version_field] = false
-            
-            buffer << original_record
-          end
+          # To update the old row, we delete the version in the database
+          # and insert a new expired version
+          
+          # If there is no truncate then the row will exist twice in the database
+          delete_outdated_record
+          
+          ETL::Engine.logger.debug "expiring original record"
+          @existing_row[scd_end_date_field] = @timestamp
+          @existing_row[scd_latest_version_field] = false
+          
+          buffer << @existing_row
 
         elsif scd_type == 1
           # SCD Type 1: only the new row should be added
           ETL::Engine.logger.debug "type 1 SCD"
 
-          if original_record = preexisting_row(row)
-            # Copy primary key over from original version of record
-            row[primary_key] = original_record[primary_key]
-            
-            # If there is no truncate then the row will exist twice in the database
-            delete_outdated_record(original_record)
-          end
+          # Copy primary key over from original version of record
+          row[primary_key] = @existing_row[primary_key]
+          
+          # If there is no truncate then the row will exist twice in the database
+          delete_outdated_record
         else
           # SCD Type 3: not supported
           ETL::Engine.logger.debug "SCD type #{scd_type} not supported"
@@ -356,39 +319,25 @@ module ETL #:nodoc:
         schedule_new_record(row)
       end
       
-      # Do all the steps required when a CRC has *not* changed.  Exact
+      # Do all the steps required when a SCD has *not* changed.  Exact
       # steps depend on what type of SCD we're handling.
-      def process_crc_match(row)
-        ETL::Engine.logger.debug "CRC matches"
+      def process_scd_match(row)
+        ETL::Engine.logger.debug "SCD fields match"
         
-        if original_record = preexisting_row(row)
-          if scd_type == 2 && has_non_scd_field_changes?(row, original_record)
-            # Copy important data over from original version of record
-            row[primary_key]              = original_record[primary_key]
-            row[scd_end_date_field]       = original_record[scd_end_date_field]
-            row[scd_effective_date_field] = original_record[scd_effective_date_field]
-            row[scd_latest_version_field] = original_record[scd_latest_version_field]
+        if scd_type == 2 && has_non_scd_field_changes?(row)
+          # Copy important data over from original version of record
+          row[primary_key]              = @existing_row[primary_key]
+          row[scd_end_date_field]       = @existing_row[scd_end_date_field]
+          row[scd_effective_date_field] = @existing_row[scd_effective_date_field]
+          row[scd_latest_version_field] = @existing_row[scd_latest_version_field]
 
-            # If there is no truncate then the row will exist twice in the database
-            delete_outdated_record(original_record)
-            
-            buffer << row
-          else
-            # The record is totally the same, so skip it
-          end
+          # If there is no truncate then the row will exist twice in the database
+          delete_outdated_record
+          
+          buffer << row
         else
-          # The record never made it into the database, so add the effective and end date
-          # and add it into the bulk load file
-          schedule_new_record(row)
+          # The record is totally the same, so skip it
         end
-      end
-      
-      # Do all steps required when a pre-existing CRC couldn't be
-      # found.  Exact steps depend on what type of SCD we're handling.
-      def process_no_crc(row)
-        ETL::Engine.logger.debug "CRC missing - record never loaded"
-        
-        schedule_new_record(row)
       end
       
       # Find the version of this row that already exists in the datawarehouse.
@@ -406,8 +355,14 @@ module ETL #:nodoc:
       
       # Check whether non-scd fields have changed since the last
       # load of this record.
-      def has_non_scd_field_changes?(row, original_record)
-        non_scd_fields(row).any? { |non_csd_field| row[non_csd_field] != original_record[non_csd_field] }
+      def has_scd_field_changes?(row)
+        scd_fields(row).any? { |non_csd_field| row[non_csd_field] != @existing_row[non_csd_field] }
+      end
+      
+      # Check whether non-scd fields have changed since the last
+      # load of this record.
+      def has_non_scd_field_changes?(row)
+        non_scd_fields(row).any? { |non_csd_field| row[non_csd_field] != @existing_row[non_csd_field] }
       end
       
       # Grab, or re-use, a database connection for running queries directly
@@ -420,10 +375,10 @@ module ETL #:nodoc:
       # that this deletes directly from the database, even if this is a file
       # destination.  It needs to do this because you can't do deletes in a 
       # bulk load.
-      def delete_outdated_record(original_record)
+      def delete_outdated_record
         ETL::Engine.logger.debug "deleting old row"
         
-        q = "DELETE FROM #{dimension_table} WHERE #{primary_key} = #{original_record[primary_key]}"
+        q = "DELETE FROM #{dimension_table} WHERE #{primary_key} = #{@existing_row[primary_key]}"
         connection.delete(q)
       end
       
@@ -449,19 +404,7 @@ module ETL #:nodoc:
         ETL::Engine.logger.debug "couldn't get primary_key from dimension model class, using default :id"
         @primary_key = :id
       end
-      
-      # Save a CRC representation of the row's values.  This can be looked
-      # up later, to see if the row has changed.
-      def save_crc(row)
-        # Record the record
-        if ETL::Engine.job # only record the execution if there is a job
-          ETL::Execution::Record.time_spent += Benchmark.realtime do
-            @crc_record.crc = crc_for_row(row)
-            @crc_record.job_id = ETL::Engine.job.id
-            @crc_record.save!
-          end
-        end
-      end
+
     end
   end
 end
