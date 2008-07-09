@@ -115,6 +115,10 @@ module ActiveWarehouse
         fields(dims).map { |field| field.name.to_sym }
       end
       
+      def fields_for_select(dims=[])
+        fields(dims).inject({}) { |select_hash, field| select_hash.update field.label.to_s => field.name.to_sym }
+      end
+      
       # Get the class name for the specified cube name
       # Example: Regional Sales will become RegionalSalesCube
       def class_name(name)
