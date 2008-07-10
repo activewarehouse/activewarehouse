@@ -363,13 +363,13 @@ module ETL #:nodoc:
       # Check whether non-scd fields have changed since the last
       # load of this record.
       def has_scd_field_changes?(row)
-        scd_fields(row).any? { |non_csd_field| row[non_csd_field] != @existing_row[non_csd_field] }
+        scd_fields(row).any? { |non_csd_field| row[non_csd_field].to_s != @existing_row[non_csd_field].to_s }
       end
       
       # Check whether non-scd fields have changed since the last
       # load of this record.
       def has_non_scd_field_changes?(row)
-        non_scd_fields(row).any? { |non_csd_field| row[non_csd_field] != @existing_row[non_csd_field] }
+        non_scd_fields(row).any? { |non_csd_field| row[non_csd_field].to_s != @existing_row[non_csd_field].to_s }
       end
       
       # Grab, or re-use, a database connection for running queries directly
