@@ -22,7 +22,6 @@ if db == 'postgresql'
 end
 
 ETL::Execution::Job.delete_all
-ETL::Execution::Record.delete_all
 
 require 'mocks/mock_source'
 require 'mocks/mock_destination'
