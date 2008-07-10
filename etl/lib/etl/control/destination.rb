@@ -136,6 +136,10 @@ module ETL #:nodoc:
           [primary_key, scd_effective_date_field, scd_end_date_field, scd_latest_version_field]
       end
       
+      def non_evolving_fields
+        (Array(configuration[:scd][:non_evolving_fields]) << primary_key).uniq
+      end
+      
       def scd?
         !configuration[:scd].nil?
       end
@@ -304,8 +308,11 @@ module ETL #:nodoc:
           # SCD Type 1: only the new row should be added
           ETL::Engine.logger.debug "type 1 SCD"
 
-          # Copy primary key over from original version of record
-          row[primary_key] = @existing_row[primary_key]
+          # Copy primary key, and other non-evolving fields over from
+          # original version of record
+          non_evolving_fields.each do |non_evolving_field|            
+            row[non_evolving_field] = @existing_row[non_evolving_field]
+          end
           
           # If there is no truncate then the row will exist twice in the database
           delete_outdated_record
