@@ -332,6 +332,7 @@ module ETL #:nodoc:
         ETL::Engine.logger.debug "SCD fields match"
         
         if scd_type == 2 && has_non_scd_field_changes?(row)
+          ETL::Engine.logger.debug "Non-SCD field changes"
           # Copy important data over from original version of record
           row[primary_key]              = @existing_row[primary_key]
           row[scd_end_date_field]       = @existing_row[scd_end_date_field]
@@ -350,7 +351,7 @@ module ETL #:nodoc:
       # Find the version of this row that already exists in the datawarehouse.
       def preexisting_row(row)
         q = "SELECT * FROM #{dimension_table} WHERE #{natural_key_equality_for_row(row)}"
-        q << " AND latest_version" if scd_type == 2
+        q << " AND #{scd_latest_version_field}" if scd_type == 2
         
         #puts "looking for original record"
         result = connection.select_one(q)
@@ -363,7 +364,7 @@ module ETL #:nodoc:
       # Check whether non-scd fields have changed since the last
       # load of this record.
       def has_scd_field_changes?(row)
-        scd_fields(row).any? { |non_csd_field| row[non_csd_field].to_s != @existing_row[non_csd_field].to_s }
+        scd_fields(row).any? { |csd_field| row[csd_field].to_s != @existing_row[csd_field].to_s }
       end
       
       # Check whether non-scd fields have changed since the last
