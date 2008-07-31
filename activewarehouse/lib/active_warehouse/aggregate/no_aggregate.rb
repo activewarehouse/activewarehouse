@@ -191,17 +191,21 @@ module ActiveWarehouse #:nodoc:
           sql += %Q(\nORDER BY\n  #{order_by.join(",\n")})
         end
         
-        result = ActiveWarehouse::CubeQueryResult.new(
-          cube_class.aggregate_fields(used_dimensions)
-        )
+        if options[:return] == :sql
+          sql
+        else
+          result = ActiveWarehouse::CubeQueryResult.new(
+            cube_class.aggregate_fields(used_dimensions)
+          )
         
-        cube_class.connection.select_all(sql).each do |row|
-          result.add_data(row.delete("#{row_dimension_name}_2_#{current_row_name}"),
-                          row.delete("#{column_dimension_name}_1_#{current_column_name}"),
-                          row) # the rest of the members of row are the fact columns
+          cube_class.connection.select_all(sql).each do |row|
+            result.add_data(row.delete("#{row_dimension_name}_2_#{current_row_name}"),
+                            row.delete("#{column_dimension_name}_1_#{current_column_name}"),
+                            row) # the rest of the members of row are the fact columns
+          end
+        
+          result
         end
-        
-        result
       end
     end
   end

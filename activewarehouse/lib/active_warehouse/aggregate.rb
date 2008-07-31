@@ -16,6 +16,23 @@ module ActiveWarehouse #:nodoc:
         @cube_class = cube_class
       end
       
+      # Helper that accepts two ActiveWarehouse::Report::Dimension
+      # objects, deconstructs them, and passes them on to +query+
+      # (implemented in inherited classes).  This provides a
+      # cleaner interface to +query+, but it might be better to
+      # re-work +query+ itself.
+      def query_row_and_column(row, column, other_options = {})
+        query(other_options.reverse_merge(
+          :column_dimension_name => column.name, 
+          :column_hierarchy_name => column.hierarchy_name, 
+          :row_dimension_name => row.name, 
+          :row_hierarchy_name => row.hierarchy_name, 
+          :cstage => column.stage, 
+          :rstage => row.stage, 
+          :filters => column.query_filters.merge(row.query_filters))
+        )
+      end
+      
       protected
       # Get the connection to use for SQL execution
       def connection

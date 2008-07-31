@@ -218,6 +218,13 @@ module ActiveWarehouse
       self.class.aggregate.query(*args)
     end
     
+    # Similar to query, but expects slightly different arguments.  See
+    # ActiveWarehouse::Aggregate::Aggregate.query_row_and_column for
+    # details.
+    def query_row_and_column(*args)
+      self.class.aggregate.query_row_and_column(*args)
+    end
+    
     # Get the database connection (delegates to Cube.connection class method)
     def connection
       self.class.connection
