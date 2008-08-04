@@ -64,6 +64,7 @@ module ETL #:nodoc:
           end
         end
         q << conditions.join(" AND ")
+        q << " LIMIT 1"
       
         #puts "query: #{q}"
         result = conn.select_one(q)
