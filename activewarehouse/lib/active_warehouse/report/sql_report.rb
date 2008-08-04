@@ -26,6 +26,11 @@ module ActiveWarehouse #:nodoc:
         ActiveWarehouse::View::SqlView.new(self, params, options)
       end
       
+      # Hack - see explanation for new (initialize).
+      def conditions
+        @params[:conditions]
+      end
+      
       protected
       
       # Hack - see explanation for new (initialize).
