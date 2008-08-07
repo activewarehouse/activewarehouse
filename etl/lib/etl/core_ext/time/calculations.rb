@@ -1,3 +1,5 @@
+#Updated by Jack Hong on 04/05/08
+
 module ETL #:nodoc:
   module CoreExtensions #:nodoc:
     module Time #:nodoc:
@@ -18,7 +20,7 @@ module ETL #:nodoc:
         end
         def fiscal_year_month(offset_month=10)
           shifted_month = month - (offset_month - 1)
-          shifted_month += 12 if shifted_month < 0
+          shifted_month += 12 if shifted_month <= 0
           shifted_month
         end
         def fiscal_year_quarter(offset_month=10)
