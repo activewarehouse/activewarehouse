@@ -7,7 +7,7 @@ Gem::Specification.new do |s|
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Anthony Eden"]
   s.bindir = %q{etl/bin}
-  s.date = %q{2008-07-10}
+  s.date = %q{2008-08-14}
   s.default_executable = %q{etl}
   s.description = %q{ActiveWarehouse ETL is a pure Ruby Extract-Transform-Load application for loading data into a database.}
   s.email = %q{anthonyeden@gmail.com}
