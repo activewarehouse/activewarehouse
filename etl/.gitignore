@@ -1,3 +1,4 @@
 test/database.yml
 test/output/*
 source_data/*
+pkg
