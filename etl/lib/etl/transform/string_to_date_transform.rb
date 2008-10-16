@@ -4,7 +4,7 @@ module ETL #:nodoc:
     class StringToDateTransform < ETL::Transform::Transform
       # Transform the value using Date.parse
       def transform(name, value, row)
-        Date.parse(value)
+        Date.parse(value) unless value.nil?
       end
     end
   end

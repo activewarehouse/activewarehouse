@@ -7,7 +7,7 @@ module ETL #:nodoc:
       # WARNING: This transform is slow (due to the Ruby implementation), but if you need to 
       # parse timestamps before or after the values supported by the Time.parse.
       def transform(name, value, row)
-        DateTime.parse(value)
+        DateTime.parse(value) unless value.nil?
       end
     end
   end

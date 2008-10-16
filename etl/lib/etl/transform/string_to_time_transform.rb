@@ -4,7 +4,7 @@ module ETL #:nodoc:
     class StringToTimeTransform < ETL::Transform::Transform
       # Transform the value using Time.parse
       def transform(name, value, row)
-        Time.parse(value)
+        Time.parse(value) unless value.nil?
       end
     end
   end
