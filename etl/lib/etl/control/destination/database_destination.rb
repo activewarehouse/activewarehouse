@@ -47,10 +47,7 @@ module ETL #:nodoc:
       
       # Flush the currently buffered data
       def flush
-        conn = ETL::Engine.connection(target)
         conn.transaction do
-          conn.truncate(table_name) if truncate
-          
           buffer.flatten.each do |row|
             # check to see if this row's compound key constraint already exists
             # note that the compound key constraint may not utilize virtual fields
@@ -81,6 +78,14 @@ module ETL #:nodoc:
       end
       
       private
+      def conn
+        @conn ||= begin
+          conn = ETL::Engine.connection(target)
+          conn.truncate(table_name) if truncate
+          conn
+        end
+      end
+      
       def table_name
         ETL::Engine.table(table, ETL::Engine.connection(target))
       end

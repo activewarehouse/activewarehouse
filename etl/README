@@ -76,6 +76,9 @@ Command line options:
 == Control File Examples
 Control file examples can be found in the examples directory.
 
+== Running Tests
+The tests require Shoulda 1.x.
+
 == Feedback
 This is a work in progress. Comments should be made on the 
 activewarehouse-discuss mailing list at the moment. Contributions are always

@@ -87,3 +87,36 @@ class SQLResolver
     ETL::Engine.table(@table, @connection)
   end
 end
+
+class FlatFileResolver
+  # Initialize the flat file resolver. Expects to open a comma-delimited file. 
+  # Returns the column with the given result_field_index.
+  #
+  # The matches argument is a Hash with the key as the column index to search and
+  # the value of the Hash as a String to match exactly. It will only match the first
+  # result.
+  def initialize(file, match_index, result_field_index)
+    @file = file
+    @match_index = match_index
+    @result_field_index = result_field_index
+  end
+  
+  # Get the rows from the file specified in the initializer.
+  def rows
+    @rows ||= FasterCSV.read(@file)
+  end
+  protected :rows
+  
+  # Match the row field from the column indicated by the match_index with the given 
+  # value and return the field value from the column identified by the result_field_index.
+  def resolve(value)
+    rows.each do |row|
+      puts "checking #{row.inspect} for #{value}"
+      if row[@match_index] == value
+        puts "match found!, returning #{row[@result_field_index]}"
+        return row[@result_field_index]
+      end
+    end
+    nil
+  end
+end

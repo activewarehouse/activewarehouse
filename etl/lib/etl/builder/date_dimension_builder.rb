@@ -26,7 +26,7 @@ module ETL #:nodoc:
       def initialize(start_date=Time.now.years_ago(5), end_date=Time.now, fiscal_year_offset_month=10)
         @start_date = start_date
         @end_date = end_date
-	@fiscal_year_offset_month = fiscal_year_offset_month.to_i
+        @fiscal_year_offset_month = fiscal_year_offset_month.to_i
         @holiday_indicators = []
       end
       

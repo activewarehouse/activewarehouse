@@ -5,6 +5,7 @@ source :in, {
   :parser => :delimited
 }, 
 [ 
+  :id,
   :first_name,
   :last_name,
   :ssn
@@ -20,5 +21,5 @@ destination :out, {
   :table => 'people',
 },
 {
-  :order => [:first_name, :last_name, :ssn]
+  :order => [:id, :first_name, :last_name, :ssn]
 }

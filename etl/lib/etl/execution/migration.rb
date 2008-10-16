@@ -23,7 +23,9 @@ module ETL #:nodoc:
         
         protected
         def last_migration
-          connection.select_values("SELECT version FROM #{schema_migrations_table_name}").map(&:to_i).sort.last
+          connection.select_values(
+            "SELECT version FROM #{schema_migrations_table_name}"
+          ).map(&:to_i).sort.last || 0
         end
         
         # Get the connection to use during migration
