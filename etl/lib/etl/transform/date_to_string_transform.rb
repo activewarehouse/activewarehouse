@@ -12,6 +12,7 @@ module ETL #:nodoc:
       end
       # Transform the value using strftime
       def transform(name, value, row)
+        return value unless value.respond_to?(:strftime)
         value.strftime(@format)
       end
     end

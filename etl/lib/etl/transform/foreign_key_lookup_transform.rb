@@ -111,9 +111,9 @@ class FlatFileResolver
   # value and return the field value from the column identified by the result_field_index.
   def resolve(value)
     rows.each do |row|
-      puts "checking #{row.inspect} for #{value}"
+      #puts "checking #{row.inspect} for #{value}"
       if row[@match_index] == value
-        puts "match found!, returning #{row[@result_field_index]}"
+        #puts "match found!, returning #{row[@result_field_index]}"
         return row[@result_field_index]
       end
     end
