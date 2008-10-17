@@ -29,7 +29,7 @@ module ActiveRecord #:nodoc:
   module ConnectionAdapters #:nodoc:
     module SchemaStatements #:nodoc:
       def initialize_schema_migrations_table_with_activewarehouse
-        initialize_schema_schema_migrations_table_without_activewarehouse
+        initialize_schema_migrations_table_without_activewarehouse
         
         begin
           execute "CREATE TABLE #{ActiveWarehouse::Migrator.schema_migrations_table_name} (version #{type_to_sql(:integer)})"
