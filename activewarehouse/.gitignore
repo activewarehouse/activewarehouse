@@ -1,3 +1,4 @@
 *.log
 test/database.yml
 source_data
+pkg
