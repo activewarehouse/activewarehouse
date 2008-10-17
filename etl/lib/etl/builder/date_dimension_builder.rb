@@ -40,6 +40,7 @@ module ETL #:nodoc:
           record[:date] = date.strftime("%m/%d/%Y")
           record[:full_date_description] = date.strftime("%B %d,%Y")
           record[:day_of_week] = date.strftime("%A")
+          record[:day_in_week] = record[:day_of_week] # alias
           #record[:day_number_in_epoch] = date.to_i / 24
           #record[:week_number_in_epoch] = date.to_i / (24 * 7)
           #record[:month_number_in_epoch] = date.to_i / (24 * 7 * 30)
@@ -64,9 +65,11 @@ module ETL #:nodoc:
           #record[:calendar_half_year] = 
           record[:calendar_year] = "#{date.year}"
           record[:fiscal_week] = "FY Week #{date.fiscal_year_week(fiscal_year_offset_month)}"
-          record[:fiscal_week_number_in_year] = date.fiscal_year_week(fiscal_year_offset_month)
+          record[:fiscal_week_number_in_year] = date.fiscal_year_week(fiscal_year_offset_month) # DEPRECATED
+          record[:fiscal_week_number] = date.fiscal_year_week(fiscal_year_offset_month)
           record[:fiscal_month] = date.fiscal_year_month(fiscal_year_offset_month)
-          record[:fiscal_month_number_in_year] = date.fiscal_year_month(fiscal_year_offset_month)
+          record[:fiscal_month_number] = date.fiscal_year_month(fiscal_year_offset_month)
+          record[:fiscal_month_number_in_year] = date.fiscal_year_month(fiscal_year_offset_month) # DEPRECATED
           record[:fiscal_year_month] = "FY#{date.fiscal_year(fiscal_year_offset_month)}-" + date.fiscal_year_month(fiscal_year_offset_month).to_s.rjust(2, '0')
           record[:fiscal_quarter] = "FY Q#{date.fiscal_year_quarter(fiscal_year_offset_month)}"
           record[:fiscal_year_quarter] = "FY#{date.fiscal_year(fiscal_year_offset_month)}-Q#{date.fiscal_year_quarter(fiscal_year_offset_month)}"
