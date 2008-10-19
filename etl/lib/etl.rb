@@ -35,6 +35,11 @@ unless Kernel.respond_to?(:gem)
   Kernel.send :alias_method, :gem, :require_gem
 end
 
+unless defined?(REXML::VERSION)
+  require 'rexml/rexml'
+  REXML::VERSION = REXML::Version
+end
+
 unless defined?(ActiveSupport)
   gem 'activesupport'
   require 'active_support'
