@@ -6,10 +6,12 @@ end
 # Test pre- and post-processors
 class ProcessorTest < Test::Unit::TestCase
   # Test bulk import functionality
-  def test_bulk_import
-    assert_nothing_raised { do_bulk_import }
-    
-    assert_equal 3, Person.count
+  
+  context "the bulk import processor" do
+    should_eventually "should import successfully" do
+      assert_nothing_raised { do_bulk_import }
+      assert_equal 3, Person.count
+    end
   end
   
   def test_bulk_import_with_empties

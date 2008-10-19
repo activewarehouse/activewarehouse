@@ -1,5 +1,6 @@
 drop table if exists people;
 create table people (
+  id int not null primary key,
   first_name char(255) not null,
   last_name char(255) not null,
   ssn char(64) not null

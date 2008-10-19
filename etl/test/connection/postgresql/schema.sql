@@ -1,5 +1,6 @@
 drop table people;
 create table people (
+  id int not null primary key,
   first_name character varying(255) not null,
   last_name character varying(255) not null,
   ssn character varying(64) not null
@@ -12,6 +13,7 @@ SELECT nextval('people_id_seq');
 
 drop table places;
 create table places (
+  id int not null primary key,
 	address text,
 	city character varying(255),
 	state character varying(255),

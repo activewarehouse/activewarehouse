@@ -1,18 +1,18 @@
 operational_database:
-  adapter: mysql
-  username: root
+  adapter: postgresql
+  username: postgres
   host: localhost
   database: etl_unittest
   encoding: utf8
 data_warehouse:
-  adapter: mysql
-  username: root
+  adapter: postgresql
+  username: postgres
   host: localhost
   database: etl_unittest
   encoding: utf8
 etl_execution:
-  adapter: mysql
-  username: root
+  adapter: postgresql
+  username: postgres
   host: localhost
   database: etl_unittest_execution
   encoding: utf8

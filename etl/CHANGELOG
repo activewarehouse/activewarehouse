@@ -186,3 +186,5 @@
 * Changed temp table to use new AdapterExtension copy_table method (aeden)
 * Added bin/etl.cmd windows batch - just add the bin folder to your PATH
   and it will let you call etl on an unpacked/pistoned version of AW-ETL (thbar)
+* Upgraded to support Rails 2.1. No longer compatible with older versions of Rail.
+* Added ETL::Builder::TimeDimensionBuilder

@@ -7,15 +7,20 @@ unless Kernel.respond_to?(:gem)
   Kernel.send :alias_method, :gem, :require_gem
 end
 
-unless defined?(ActiveSupport)
-  begin
-    $:.unshift(File.dirname(__FILE__) + "/../../activesupport/lib")  
-    require 'active_support'  
-  rescue LoadError
-    gem 'activesupport'
-  end
-end
+require 'rails_generator'
+Rails::Generator::Base.append_sources(
+  Rails::Generator::PathSource.new(:active_warehouse_test, "#{File.dirname(__FILE__)}/../generators/")
+)
 
+# unless defined?(ActiveSupport)
+#   begin
+#     $:.unshift(File.dirname(__FILE__) + "/../../activesupport/lib")  
+#     require 'active_support'  
+#   rescue LoadError
+#     gem 'activesupport'
+#   end
+# end
+# 
 unless defined?(ActiveRecord)
   begin
     $:.unshift(File.dirname(__FILE__) + "/../../activerecord/lib")
@@ -27,11 +32,6 @@ end
 
 require 'pp'
 require 'test/unit'
-
-require 'rails_generator'
-Rails::Generator::Base.append_sources(
-  Rails::Generator::PathSource.new(:active_warehouse_test, "#{File.dirname(__FILE__)}/../generators/")
-)
 
 connection = (ENV['DB'] || 'native_mysql')
 require "connection/#{connection}/connection"

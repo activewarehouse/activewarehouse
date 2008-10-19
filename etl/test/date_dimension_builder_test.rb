@@ -2,32 +2,55 @@ require File.dirname(__FILE__) + '/test_helper'
 
 class DateDimensionBuilderTest < Test::Unit::TestCase
   
-  def test_initialization_defaults
-    start_date = Time.now.years_ago(5).to_date
-    end_date = Time.now.to_date
-    builder = ETL::Builder::DateDimensionBuilder.new
-    assert_equal start_date, builder.start_date
-    assert_equal end_date, builder.end_date
-    assert_equal [], builder.holiday_indicators
-  end
-  
-  def test_initializations_with_preset_values    
-    start_date = Time.now.years_ago(2).to_date
-    end_date = Time.now.years_ago(1).to_date
-    builder = ETL::Builder::DateDimensionBuilder.new(start_date, end_date)
-    assert_equal start_date, builder.start_date
-    assert_equal end_date, builder.end_date
-  end
-  
-  def test_build
-    # specific dates required when testing, because leap years affect
-    # how many records are built
-    start_date = Date.parse('2002-05-19').to_time
-    end_date = Date.parse('2007-05-19').to_time
-    builder = ETL::Builder::DateDimensionBuilder.new(start_date, end_date)
-    records = builder.build
-    assert_equal 1827, records.length
-    assert_date_dimension_record_equal(builder.start_date, records.first)
+  context "the DateDimensionBuilder" do
+    context "when initialized with defaults" do
+      setup do
+        @builder = ETL::Builder::DateDimensionBuilder.new
+      end
+      should "have a start date of 5 years ago" do
+        assert_equal Time.now.years_ago(5).to_date, @builder.start_date.to_date
+      end
+      should "have an end date of now" do
+        assert_equal Time.now.to_date, @builder.end_date.to_date
+      end
+      should "have an empty of array of holiday indicators" do
+        assert_equal [], @builder.holiday_indicators
+      end
+    end
+    context "when initialized with arguments" do
+      setup do 
+        @start_date = Time.now.years_ago(2)
+        @end_date = Time.now.years_ago(1)
+        @builder = ETL::Builder::DateDimensionBuilder.new(@start_date, @end_date)
+      end
+      should "respect a custom start date" do
+        assert_equal @start_date.to_date, @builder.start_date.to_date
+      end
+      should "respect a custom end date" do
+        assert_equal @end_date.to_date, @builder.end_date.to_date
+      end
+    end
+    context "when building a date dimension using the default settings" do
+      setup do
+        # specific dates required when testing, because leap years affect
+        # how many records are built
+        @start_date = Date.parse('2002-05-19').to_time
+        @end_date = Date.parse('2007-05-19').to_time
+        @builder = ETL::Builder::DateDimensionBuilder.new(@start_date, @end_date)
+        @records = @builder.build
+      end
+      should "build a dimension with the correct number of records" do
+        assert_equal 1827, @records.length
+      end
+      should "have the correct first date" do
+        assert_date_dimension_record_equal(@builder.start_date, @records.first)
+      end
+    end
+    context "when building a date dimension with a fiscal year offset month" do
+      should_eventually "respect the fiscal year offset month" do
+        
+      end
+    end
   end
   
   def assert_date_dimension_record_equal(date, record)

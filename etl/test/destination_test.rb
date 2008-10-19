@@ -65,8 +65,8 @@ class DestinationTest < Test::Unit::TestCase
   
   # Test a database destination
   def test_database_destination
-    row = ETL::Row[:first_name => 'Bob', :last_name => 'Smith', :ssn => '111234444']
-    row_needs_escape = ETL::Row[ :first_name => "Foo's", :last_name => "Bar", :ssn => '000000000' ]
+    row = ETL::Row[:id => 1, :first_name => 'Bob', :last_name => 'Smith', :ssn => '111234444']
+    row_needs_escape = ETL::Row[:id => 2, :first_name => "Foo's", :last_name => "Bar", :ssn => '000000000' ]
     control = ETL::Control::Control.parse(File.dirname(__FILE__) + 
       '/delimited.ctl')
     
@@ -80,7 +80,7 @@ class DestinationTest < Test::Unit::TestCase
       :table => 'people',
       :buffer_size => 0 
     }
-    mapping = { :order => [:first_name, :last_name, :ssn] }
+    mapping = { :order => [:id, :first_name, :last_name, :ssn] }
     dest = ETL::Control::DatabaseDestination.new(control, configuration, mapping)
     dest.write(row)
     dest.close
@@ -89,7 +89,7 @@ class DestinationTest < Test::Unit::TestCase
   end
   
   def test_database_destination_with_control
-    row = ETL::Row[:first_name => 'Bob', :last_name => 'Smith', :ssn => '111234444']
+    row = ETL::Row[:id => 1, :first_name => 'Bob', :last_name => 'Smith', :ssn => '111234444']
     control = ETL::Control::Control.parse(File.dirname(__FILE__) + 
       '/delimited_destination_db.ctl')
     Person.delete_all
@@ -102,9 +102,9 @@ class DestinationTest < Test::Unit::TestCase
   end
   
   def test_unique
-    row1 = ETL::Row[:first_name => 'Bob', :last_name => 'Smith', :ssn => '111234444']
-    row2 = ETL::Row[:first_name => 'Bob', :last_name => 'Smith', :ssn => '111234444']
-    row3 = ETL::Row[:first_name => 'John', :last_name => 'Smith', :ssn => '000112222']
+    row1 = ETL::Row[:id => 1, :first_name => 'Bob', :last_name => 'Smith', :ssn => '111234444']
+    row2 = ETL::Row[:id => 2, :first_name => 'Bob', :last_name => 'Smith', :ssn => '111234444']
+    row3 = ETL::Row[:id => 3, :first_name => 'John', :last_name => 'Smith', :ssn => '000112222']
          
     outfile = 'output/test_unique.txt'
     control = ETL::Control::Control.parse(File.dirname(__FILE__) + '/delimited.ctl')
@@ -129,9 +129,9 @@ class DestinationTest < Test::Unit::TestCase
   end
   
   def test_multiple_unique
-    row1 = ETL::Row[:first_name => 'Bob', :last_name => 'Smith', :ssn => '111234444']
-    row2 = ETL::Row[:first_name => 'Bob', :last_name => 'Smith', :ssn => '111234444']
-    row3 = ETL::Row[:first_name => 'Bob', :last_name => 'Smith', :ssn => '000112222']
+    row1 = ETL::Row[:id => 1, :first_name => 'Bob', :last_name => 'Smith', :ssn => '111234444']
+    row2 = ETL::Row[:id => 2, :first_name => 'Bob', :last_name => 'Smith', :ssn => '111234444']
+    row3 = ETL::Row[:id => 3, :first_name => 'Bob', :last_name => 'Smith', :ssn => '000112222']
     
     outfile = 'output/test_multiple_unique.txt'
     control = ETL::Control::Control.parse(File.dirname(__FILE__) + '/delimited.ctl')

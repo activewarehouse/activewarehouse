@@ -4,6 +4,7 @@ $:.unshift(File.dirname(__FILE__))
 require 'test/unit'
 require 'pp'
 require 'etl'
+require 'shoulda'
 require 'flexmock/test_unit'
 
 ETL::Engine.init(:config => File.dirname(__FILE__) + '/database.yml')

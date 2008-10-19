@@ -4,20 +4,28 @@ module ETL #:nodoc:
     # for the ETL engine
     class Migration
       class << self
-        # Execute the migrations
-        def migrate
-          connection.initialize_schema_information
-          v = connection.select_value("SELECT version FROM #{schema_info_table_name}").to_i
-          v.upto(target - 1) do |i| 
-            __send__("migration_#{i+1}".to_sym)
-            update_schema_info(i+1)
-          end
-        end
         protected
         # Get the schema info table name
         def schema_info_table_name
-          ETL::Execution::Base.table_name_prefix + "schema_info" + 
-            ETL::Execution::Base.table_name_suffix
+          ActiveRecord::Migrator.schema_migrations_table_name
+        end
+        alias :schema_migrations_table_name :schema_info_table_name
+        
+        public
+        # Execute the migrations
+        def migrate
+          connection.initialize_schema_migrations_table
+          last_migration.upto(target - 1) do |i| 
+            __send__("migration_#{i+1}".to_sym)
+            connection.assume_migrated_upto_version(i+1)
+          end
+        end
+        
+        protected
+        def last_migration
+          connection.select_values(
+            "SELECT version FROM #{schema_migrations_table_name}"
+          ).map(&:to_i).sort.last || 0
         end
         
         # Get the connection to use during migration
