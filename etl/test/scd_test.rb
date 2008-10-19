@@ -21,6 +21,11 @@ class ScdTest < Test::Unit::TestCase
         should "set the original id" do
           assert_equal 1, find_bobs.first.id
         end
+        should "skip the load if there is no change" do
+          do_type_1_run(1)
+          lines = lines_for('scd_test_type_1.txt')
+          assert lines.empty?, "scheduled load expected to be empty, was #{lines.size} records"
+        end
       end
       context "on run 2" do
         setup do
@@ -35,10 +40,6 @@ class ScdTest < Test::Unit::TestCase
         end
         should "keep id" do
           assert_equal 1, find_bobs.first.id
-        end
-        should "skip the load if there is no change" do
-          lines = lines_for('scd_test_type_1.txt')
-          assert lines.empty?, "scheduled load expected to be empty, was #{lines.size} records"
         end
         should "only change once even if run again" do
           do_type_1_run(2)
@@ -83,6 +84,12 @@ class ScdTest < Test::Unit::TestCase
         should "set the latest version flag" do
           assert find_bobs.first.latest_version?
         end
+        should "skip the load if there is no change" do
+          do_type_2_run(1)
+          lines = lines_for('scd_test_type_2.txt')
+          assert lines.empty?, "scheduled load expected to be empty, was #{lines.size} records"
+        end
+        
       end
       context "on run 2" do
         setup do
@@ -124,11 +131,6 @@ class ScdTest < Test::Unit::TestCase
           new_bob = find_bobs.detect { |bob| 2 == bob.id }
           assert !original_bob.latest_version?
           assert new_bob.latest_version?
-        end
-        should "skip the load if there is no change" do
-          do_type_2_run(3)
-          lines = lines_for('scd_test_type_2.txt')
-          assert lines.empty?, "scheduled load expected to be empty, was #{lines.size} records"
         end
         should "only execute a change once" do
           do_type_2_run(2)
