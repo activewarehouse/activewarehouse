@@ -8,7 +8,7 @@ class ProcessorTest < Test::Unit::TestCase
   # Test bulk import functionality
   
   context "the bulk import processor" do
-    should_eventually "should import successfully" do
+    should "should import successfully" do
       assert_nothing_raised { do_bulk_import }
       assert_equal 3, Person.count
     end
