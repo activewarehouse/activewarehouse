@@ -28,8 +28,8 @@ module ETL #:nodoc:
           @rails_root = options[:rails_root]
           
           require File.join(@rails_root, 'config/environment') if @rails_root
-
           options[:config] ||= 'database.yml'
+          options[:config] = 'config/database.yml' unless File.exist?(options[:config])
           database_configuration = YAML::load(ERB.new(IO.read(options[:config])).result + "\n")
           ActiveRecord::Base.configurations.merge!(database_configuration)
           ETL::Base.configurations = database_configuration
