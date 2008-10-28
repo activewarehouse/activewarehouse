@@ -44,7 +44,7 @@ module ETL #:nodoc:
         ETL::Engine.logger.debug "validating line #{line} in file #{file}"
         if row.length != fields.length
           raise_with_info( MismatchError, 
-            "The number of rows from the source (#{row.length}) does not match the number of rows in the definition (#{fields.length})", 
+            "The number of columns from the source (#{row.length}) does not match the number of columns in the definition (#{fields.length})", 
             line, file
           )
         end

@@ -106,20 +106,34 @@ module HttpTools
     result
   end
   
-  def parse_uri(uri_string)
-    if uri_string      
+  # Parse a URI. If options[:prefix] is set then prepend it to the keys for the hash that
+  # is returned.
+  def parse_uri(uri_string, options={})
+    prefix = options[:prefix] ||= ''
+    empty_hash = {
+      "#{prefix}scheme".to_sym => nil, 
+      "#{prefix}host".to_sym => nil, 
+      "#{prefix}port".to_sym => nil, 
+      "#{prefix}uri_path".to_sym => nil, 
+      "#{prefix}domain".to_sym => nil
+    }
+    if uri_string
       #attempt to parse uri --if it's a uri then catch the problem and set everything to nil
       begin
         uri = URI.parse(uri_string)    
-        results = {:scheme => uri.scheme, :host => uri.host, :port => uri.port, :uri_path => uri.path}
-        results[:domain] = $1 if uri.host =~ /\.?([^\.]+\.[^\.]+$)/
+        results = {
+          "#{prefix}scheme".to_sym => uri.scheme, 
+          "#{prefix}host".to_sym => uri.host, 
+          "#{prefix}port".to_sym => uri.port, 
+          "#{prefix}uri_path".to_sym => uri.path
+        }
+        results["#{prefix}domain".to_sym] = $1 if uri.host =~ /\.?([^\.]+\.[^\.]+$)/
         results
       rescue
-        {:scheme => nil, :host => nil, :port => nil, :uri_path => nil, :domain => nil}      
+        empty_hash
       end
-
     else
-      {:scheme => nil, :host => nil, :port => nil, :uri_path => nil, :domain => nil}
+      empty_hash
     end
   end
 end

@@ -33,9 +33,11 @@ module ETL #:nodoc:
         #fields[:timestamp] =~ r%{(\d\d)/(\w\w\w)/(\d\d\d\d):(\d\d):(\d\d):(\d\d) -(\d\d\d\d)}
         d = Date._strptime(fields[:timestamp], '%d/%b/%Y:%H:%M:%S') unless fields[:timestamp].nil?
         fields[:timestamp] = Time.mktime(d[:year], d[:mon], d[:mday], d[:hour], d[:min], d[:sec], d[:sec_fraction]) unless d.nil?
+        
+        fields[:method], fields[:path] = fields[:request].split(/\s/)
 
         fields.merge!(parse_user_agent(fields[:user_agent])) unless fields[:user_agent].nil?
-        fields.merge!(parse_uri(fields[:referrer]))
+        fields.merge!(parse_uri(fields[:referrer], :prefix => 'referrer'))
         
         fields.each do |key, value|
           fields[key] = nil if value == '-'
