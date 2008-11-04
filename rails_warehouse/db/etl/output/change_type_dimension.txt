@@ -1,4 +1,0 @@
-1,A,Added
-2,D,Deleted
-3,M,Modified
-4,R,Replaced

@@ -1,0 +1,10 @@
+SQL (0.000173)  SET client_min_messages TO 'panic'
+SQL (0.000129)  SET client_min_messages TO 'notice'
+SQL (0.000000)  PGError: ERROR: relation "pos_retail_sales_transaction_facts" does not exist
+: SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'pos_retail_sales_transaction_facts'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+
