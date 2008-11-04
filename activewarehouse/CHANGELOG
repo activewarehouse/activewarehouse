@@ -58,3 +58,4 @@
 
 0.4.0 -
 * Applied patch from Giao Phan for date dimension builder.
+* Updated for Rails 2.x, no longer compatible for Railsversions less than 2.x

@@ -29,48 +29,17 @@ $:.unshift(File.dirname(__FILE__)) unless
   $:.include?(File.dirname(__FILE__)) || $:.include?(File.expand_path(File.dirname(__FILE__)))
 
 require 'rubygems'
-unless Kernel.respond_to?(:gem)
-  Kernel.send :alias_method, :gem, :require_gem
-end
+require 'active_support'
+require 'active_record'
 
-unless defined?(ActiveSupport)
-  begin
-    $:.unshift(File.dirname(__FILE__) + "/../../activesupport/lib")
-    require 'active_support'  
-  rescue LoadError
-    gem 'activesupport'
-  end
-end
-
-unless defined?(ActiveRecord)
-  begin
-    $:.unshift(File.dirname(__FILE__) + "/../../activerecord/lib")
-    require 'active_record'
-  rescue LoadError
-    gem 'activerecord'
-  end
-end
-
-unless defined?(ActionView)
-  begin
-    $:.unshift(File.dirname(__FILE__) + "/../../actionpack/lib")
-    require 'action_pack'
-    require 'action_controller'
-    require 'action_view'
-  rescue LoadError
-    gem 'actionpack'
-  end
-end
+$:.unshift(File.dirname(__FILE__) + "/../../actionpack/lib")
+require 'action_pack'
+require 'action_controller'
+require 'action_view'
 
 require 'fastercsv'
 require 'fileutils'
 require 'adapter_extensions'
-
-# Require 1.1.6 compatibility code if necessary
-require 'active_record/version'
-if ActiveRecord::VERSION::MAJOR < 1 || ActiveRecord::VERSION::MINOR < 15
-  require 'active_warehouse/compat/compat'
-end
 
 require 'active_warehouse/ordered_hash'
 require 'active_warehouse/field'
