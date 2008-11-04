@@ -1,8 +1,0 @@
-This directory holds a first draft of a lexer and parser for the MDX multi-dimensional query language. It is unfortunate that a true specification for MDX is so hard to come by, however I have done my best to capture the initial elements of MDX queries. The grammar is defined using Dhaka (http://dhaka.rubyforge.org/) - you will need to install the Dhaka gem to generate the parser and lexer from the grammar and lexer specification (respectively).
-
-The parser doesn't actually do anything yet, but hopefully I'll be able to put some time into it and get it working sometime in the near future.
-
-Resources:
-
-MDX Keywords: http://msdn2.microsoft.com/en-us/library/ms145629.aspx
-MDX Syntax Elements: http://msdn2.microsoft.com/en-us/library/ms146020.aspx
