@@ -31,34 +31,15 @@ require 'erb'
 
 require 'rubygems'
 
-unless Kernel.respond_to?(:gem)
-  Kernel.send :alias_method, :gem, :require_gem
-end
-
 unless defined?(REXML::VERSION)
   require 'rexml/rexml'
   REXML::VERSION = REXML::Version
 end
 
-unless defined?(ActiveSupport)
-  gem 'activesupport'
-  require 'active_support'
-end
-
-unless defined?(ActiveRecord)
-  gem 'activerecord'
-  require 'active_record'
-end
-
-unless defined?(AdapterExtensions)
-  gem 'adapter_extensions'
-  require 'adapter_extensions'
-end
-
-unless defined?(FasterCSV)
-  gem 'fastercsv'
-  require 'faster_csv'
-end
+require 'active_support'
+require 'active_record'
+require 'adapter_extensions'
+require 'faster_csv'
 
 $:.unshift(File.dirname(__FILE__))
 
