@@ -40,7 +40,7 @@ module ActiveWarehouse::View
 						value = format.call(cell.raw_value)
           end	
 	
-  				value = link_to_if((table_view.report.link_cell && column_dimension.has_children? && row_dimension.has_children?), value, 
+  				value = link_to_if((table_view.report.link_cell && table_view.column_dimension.has_children? && table_view.row_dimension.has_children?), value, 
  						table_view.cell_link(cell.column_dimension_value,data_row.dimension_value)
  					)
  					data[cell.key.to_sym] = value
