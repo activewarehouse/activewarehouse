@@ -1,0 +1,13 @@
+etl_execution:
+  database: activewarehouse_unittest_etl
+  adapter: postgresql
+  encoding: unicode
+  username: postgres
+  password:
+
+awunit:
+  database: activewarehouse_unittest
+  adapter: postgresql
+  encoding: unicode
+  username: postgres
+  password:
