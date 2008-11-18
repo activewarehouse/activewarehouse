@@ -1,0 +1,5 @@
+To execute the tests you will need to have the Shoulda gem installed. More information may be found here:
+
+http://www.thoughtbot.com/projects/shoulda/
+
+You will also need to copy database.example.yml to database.yml and make any database configuration changes.

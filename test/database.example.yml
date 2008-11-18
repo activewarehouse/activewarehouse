@@ -1,0 +1,7 @@
+# Modify this file (if necessary) and save it as database.yml in the test/ directory.
+test:
+  adapter: "postgresql"
+  host: "localhost"
+  username: "postgres"
+  password: ""
+  database: "activewarehouse_unittest"
