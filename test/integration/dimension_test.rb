@@ -12,13 +12,17 @@ class DimensionTest < Test::Unit::TestCase
       StoreDimension.create!(:store_state => 'New York', :store_region => 'North', :store_county => 'Albany')
       StoreDimension.create!(:store_state => 'Deleware', :store_region => 'North', :store_county => 'Dover')
     end
-    context "for the available values" do
+    teardown do
+      StoreDimension.delete_all
+    end
+    context "the interface for retrieving available values" do
       should "return an array of unique available values" do
-        assert_equal ['Alabama','Deleware','Florida','Georgia','New York'], StoreDimension.available_values(:store_state)
         assert_equal ['North','South'], StoreDimension.available_values(:store_region)
+        assert_equal ['Alabama','Deleware','Florida','Georgia','New York'], StoreDimension.available_values(:store_state)
+        assert_equal ["Albany","Bacon","Brevard"], StoreDimension.available_values(:store_county)[0, 3]
       end
     end
-    context "for the available child values" do
+    context "the interface for retrieving available child values" do
       should "return an array of unique available child values" do
         assert_equal ["Alabama","Florida","Georgia"], StoreDimension.available_child_values(:location, ["South"])
         assert_equal ["Bacon"], StoreDimension.available_child_values(:location, ["South", "Georgia"])
@@ -27,6 +31,30 @@ class DimensionTest < Test::Unit::TestCase
         assert_raise ArgumentError do
           StoreDimension.available_child_values(:location, ["South", "Georgia", "Bacon"])
         end
+      end
+    end
+    context "the interface for retrieving a tree of available values" do
+      setup do
+        @root = StoreDimension.available_values_tree(:location)
+      end
+      should "have a root with the value of 'All'" do
+        assert_equal 'All', @root.value
+      end
+      should "have a child" do
+        assert @root.has_child?('South'), 'Root node does not have child South'
+      end
+      should "have children" do
+        assert_equal ['North','South'], @root.children.collect { |node| node.value }
+      end
+    end
+    context "the interface for retrieving a denominator count" do
+      should "return the correct count" do
+        assert_equal 6, StoreDimension.denominator_count(:location, :store_region)["South"]
+        assert_equal 2, StoreDimension.denominator_count(:location, :store_region)["North"]
+        assert_equal 3, StoreDimension.denominator_count(:location, :store_region, :store_state)["South"]
+      end
+      should "return nil if there is no value for the given hierarchy level" do
+        assert_nil StoreDimension.denominator_count(:location, :store_region)["West"]
       end
     end
   end
