@@ -1,0 +1,10 @@
+module Autotest::CustomTestMatch
+  Autotest.add_hook :initialize do |at|
+    at.add_mapping(/test/) do |f, _|
+      at.files_matching(/^test\/.*_test\.rb$/)
+    end
+    at.add_mapping(/lib\/.*/) do |f, _|
+      at.files_matching(/^test\/.*_test\.rb$/)
+    end
+  end
+end

@@ -3,8 +3,6 @@ require 'rake/testtask'
 require 'rake/rdoctask'
 require 'rake/gempackagetask'
 require 'rake/contrib/rubyforgepublisher'
-require 'spec/version'
-require 'spec/rake/spectask'
 
 require File.join(File.dirname(__FILE__), 'lib/active_warehouse', 'version')
 
@@ -17,24 +15,13 @@ module AW
 end
 
 desc 'Default: run tests and specs.'
-task :default => [:test, :spec]
+task :default => [:test]
 
 desc 'Test the active_warehouse plugin.'
 Rake::TestTask.new(:test) do |t|
   t.libs << 'lib'
   t.pattern = 'test/**/*_test.rb'
   t.verbose = true
-end
-
-desc "Run all specs"
-Spec::Rake::SpecTask.new do |t|
-  t.spec_files = FileList['spec/**/*_spec.rb']
-  t.spec_opts = ['--options', 'spec/spec.opts']
-  unless ENV['NO_RCOV']
-    t.rcov = true
-    t.rcov_dir = '../doc/output/coverage'
-    t.rcov_opts = ['--exclude', 'spec\/spec,bin\/spec,examples,\/var\/lib\/gems,\/Library\/Ruby,\.autotest']
-  end
 end
 
 namespace :rcov do
