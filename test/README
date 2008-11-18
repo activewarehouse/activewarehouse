@@ -2,4 +2,5 @@ To execute the tests you will need to have the Shoulda gem installed. More infor
 
 http://www.thoughtbot.com/projects/shoulda/
 
-You will also need to copy database.example.yml to database.yml and make any database configuration changes.
+You will also need to create a database to use for integration tests and copy database.example.yml to
+database.yml and make any database configuration changes so that it connects to that database.

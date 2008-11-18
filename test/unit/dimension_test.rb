@@ -55,10 +55,10 @@ class DimensionTest < Test::Unit::TestCase
       location_hierarchy = StoreDimension.hierarchy(:location)
       assert_not_nil location_hierarchy
       assert_equal 3, location_hierarchy.length
-      assert_equal :store_state, location_hierarchy[0]
+      assert_equal [:store_region, :store_state, :store_county], location_hierarchy
     end
     should "provide a hierarchies collection" do
-      assert_equal 2, StoreDimension.hierarchies.length
+      assert_equal 1, StoreDimension.hierarchies.length
     end
     should "provide a method for determining the last_modified time" do
       assert_not_nil StoreDimension.last_modified
