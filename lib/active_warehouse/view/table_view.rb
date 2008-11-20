@@ -19,13 +19,15 @@ module ActiveWarehouse
         @row_crumbs = RowCrumb.gather(@row_dimension, @current_params)
 				@query_result = execute_query
 				
-				@fact_attributes = report.fact_attributes.map	do |fact_attribute_name|
-          case fact_attribute_name
+				@fact_attributes = report.fact_attributes.map	do |fact_attribute|
+          case fact_attribute
           when Symbol, String
-            fact_attribute = report.fact_class.field_for_name(fact_attribute_name.to_s.dup)
-            raise "Field name #{fact_attribute_name} not defined in the fact #{report.fact_class}" if fact_attribute.nil?
+            fact_attribute = report.fact_class.field_for_name(fact_attribute.to_s.dup)
+            raise "Field name #{fact_attribute} not defined in the fact #{report.fact_class}" if fact_attribute.nil?
+            fact_attribute
+          else
+            fact_attribute  
           end			
-					fact_attribute
 				end
 			end
 			
