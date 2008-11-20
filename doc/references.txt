@@ -1,0 +1,4 @@
+The following papers are relevant to building, storing and querying data cubes with large databases.
+
+http://research.microsoft.com/research/pubs/view.aspx?msr_tr_id=MSR-TR-95-22
+http://dbpubs.stanford.edu/pub/showDoc.Fulltext?lang=en&doc=1995-34&format=pdf&compression=&name=1995-34.pdf

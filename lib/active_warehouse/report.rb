@@ -1,0 +1,7 @@
+require 'active_warehouse/report/abstract_report'
+require 'active_warehouse/report/table_report'
+require 'active_warehouse/report/chart_report'
+require 'active_warehouse/report/dimension'
+require 'active_warehouse/report/data_column'
+require 'active_warehouse/report/data_row'
+require 'active_warehouse/report/data_cell'

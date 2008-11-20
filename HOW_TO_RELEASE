@@ -1,0 +1,7 @@
+cd trunk
+rake release
+cd ..
+svn cp trunk tags/release-x.y.z
+cd tags/release-x.y.z
+svn commit
+rake pdoc

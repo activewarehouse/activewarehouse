@@ -1,0 +1,36 @@
+NOTE:  If using Rails 1.2.3 or below, and using SQL Server 2005, you MUST
+install this patch: http://dev.rubyonrails.org/ticket/7703
+
+The ActiveWarehouse ETL Gem, version 0.8.1 or later, must be installed before
+running the ActiveWarehouse tests.
+
+You need two databases to run the unit tests:
+
+* activewarehouse_unittest - used for the tests themselves
+* activewarehouse_unittest_etl - required by activewarehouse-etl
+
+You must create a test/database.yml file to configure the database connection
+information used to store the ETL execution metadata. The configuration
+must be named etl_execution, and it must map to the activewarehouse_unittest_etl
+database.
+
+You then need another configuration named awunit and point it to the
+activewarehouse_unittest database.
+
+See test/database.yml.example for an example configuration.
+
+You can select the database connection to be used for the unit tests themselves
+by using the DB= option when running rake. For example:
+
+  rake DB=foo
+  
+This would require 'connection/foo/connection.rb' to establish the connection.
+
+Note for creating new test tables, setup must follow this order:
+
+ * Create the table
+ * Require the model
+ * Populate the table
+ 
+This is necessary to avoid a "chicken and egg" problem as certain models require 
+the table to exist.

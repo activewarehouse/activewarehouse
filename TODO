@@ -1,0 +1,4 @@
+TODO list:
+
+* Modify the fact generator so that the migration has a map for foreign key and a map for fact attributes. The foreign keys can then automatically be indexed as that is pretty much standard behavior.
+* Make the belongs_to connection between facts and dimensions automatic.
