@@ -1,0 +1,5 @@
+.DS_Store
+pkg
+*.log
+test/database.yml
+source_data
