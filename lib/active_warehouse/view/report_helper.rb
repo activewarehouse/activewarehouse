@@ -102,4 +102,13 @@ module ReportHelper
     result.blank? ? "" : "#{crumbs.last.crumb_type}: #{result}"
   end
   
+  def render_chart_report(table_view, chart_id = "yui_chart")
+    Yui4Rails::Widgets::Chart.new(:bar, chart_id, 
+    {
+      :data_rows => yui_data_rows(table_view), 
+      :col_defs => yui_column_definitions(table_view), 
+      :series_defs => yui_series_definitions(table_view),
+      :y_field => "row_dimension_label"
+    }).render
+  end  
 end

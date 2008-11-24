@@ -64,5 +64,18 @@ module ActiveWarehouse::View
   		end
   		x.target!
     end
+    
+    def yui_series_definitions(table_view)
+      series_def = []
+      table_view.column_dimension.values.each do |col_dim_value|
+        table_view.fact_attributes.each do |fact_attribute|
+  				child_data = {}
+          child_data[:displayName] = fact_attribute.label.humanize.titleize
+          child_data[:xField] = "#{col_dim_value}_#{fact_attribute.label}".gsub(' ', '_').downcase
+          series_def << child_data
+        end	
+      end
+      series_def
+    end
   end
 end
