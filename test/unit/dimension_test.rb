@@ -66,5 +66,41 @@ class DimensionTest < Test::Unit::TestCase
     should "provide the correct foreign key" do
       assert_equal 'store_id', StoreDimension.foreign_key
     end
+    context "for the denominator_count feature" do
+      should "raise an error if there is no hierarchy levels for the given hierarchy name" do
+        begin
+          StoreDimension.denominator_count(:foo, :bar)
+          fail "ArgumentError expected but not raised"
+        rescue ArgumentError => e
+          assert_equal "The hierarchy 'foo' does not exist in your dimension StoreDimension", e.message
+        end
+      end
+      should "raise an error if the specified level does not exist" do
+        begin
+          StoreDimension.denominator_count(:location, :foo)
+        rescue ArgumentError => e
+          assert_equal "The level 'foo' does not appear to exist", e.message
+        end
+      end
+    end
+    context "for the available_child_values feature" do
+      should "raise an error if there is no hierarchy levels for the given hierarchy name" do
+        begin
+          StoreDimension.available_child_values(:foo, [])
+          fail "ArgumentError expected but not raised"
+        rescue ArgumentError => e
+          assert_equal "The hierarchy 'foo' does not exist in your dimension StoreDimension", e.message
+        end
+      end
+      should "raise an error if the levels exceeds the hierarchy depth" do
+        parent_values = ['South', 'Florida', 'Miami-Dade']
+        begin
+          StoreDimension.available_child_values(:location, parent_values)
+          fail "ArgumentError expected but not raised"
+        rescue ArgumentError => e
+          assert_equal "The parent_values '#{parent_values.inspect}' equals or exceeds the hierarchy depth #{StoreDimension.hierarchy_levels[:location].inspect}", e.message
+        end
+      end
+    end
   end
 end

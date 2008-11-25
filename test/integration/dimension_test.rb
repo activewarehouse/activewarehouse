@@ -3,14 +3,14 @@ require "#{File.dirname(__FILE__)}/test_helper"
 class DimensionTest < Test::Unit::TestCase
   context "the Store dimension" do
     setup do
-      StoreDimension.create!(:store_state => 'Florida', :store_region => 'South', :store_county => 'Brevard')
-      StoreDimension.create!(:store_state => 'Florida', :store_region => 'South', :store_county => 'Seminole')
-      StoreDimension.create!(:store_state => 'Florida', :store_region => 'South', :store_county => 'Flagler')
-      StoreDimension.create!(:store_state => 'Georgia', :store_region => 'South', :store_county => 'Bacon')
-      StoreDimension.create!(:store_state => 'Alabama', :store_region => 'South', :store_county => 'Jefferson')
-      StoreDimension.create!(:store_state => 'Alabama', :store_region => 'South', :store_county => 'Montgomery')
-      StoreDimension.create!(:store_state => 'New York', :store_region => 'North', :store_county => 'Albany')
-      StoreDimension.create!(:store_state => 'Deleware', :store_region => 'North', :store_county => 'Dover')
+      StoreDimension.create!(:store_region => 'South', :store_state => 'Florida', :store_county => 'Brevard')
+      StoreDimension.create!(:store_region => 'South', :store_state => 'Florida', :store_county => 'Seminole')
+      StoreDimension.create!(:store_region => 'South', :store_state => 'Florida', :store_county => 'Flagler')
+      StoreDimension.create!(:store_region => 'South', :store_state => 'Georgia', :store_county => 'Bacon')
+      StoreDimension.create!(:store_region => 'South', :store_state => 'Alabama', :store_county => 'Jefferson')
+      StoreDimension.create!(:store_region => 'South', :store_state => 'Alabama', :store_county => 'Montgomery')
+      StoreDimension.create!(:store_region => 'North', :store_state => 'New York', :store_county => 'Albany')
+      StoreDimension.create!(:store_region => 'North', :store_state => 'Deleware', :store_county => 'Dover')
     end
     teardown do
       StoreDimension.delete_all
@@ -48,10 +48,14 @@ class DimensionTest < Test::Unit::TestCase
       end
     end
     context "the interface for retrieving a denominator count" do
-      should "return the correct count" do
+      should "return the correct count when the denominator level is not specified" do
         assert_equal 6, StoreDimension.denominator_count(:location, :store_region)["South"]
         assert_equal 2, StoreDimension.denominator_count(:location, :store_region)["North"]
+        assert_equal 3, StoreDimension.denominator_count(:location, :store_state)["Florida"]
+      end
+      should "return the correct count when the denominator level is specified" do
         assert_equal 3, StoreDimension.denominator_count(:location, :store_region, :store_state)["South"]
+        assert_equal 2, StoreDimension.denominator_count(:location, :store_region, :store_state)["North"]
       end
       should "return nil if there is no value for the given hierarchy level" do
         assert_nil StoreDimension.denominator_count(:location, :store_region)["West"]

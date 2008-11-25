@@ -140,6 +140,11 @@ module ActiveWarehouse #:nodoc
           raise ArgumentError, "The hierarchy '#{hierarchy_name}' does not exist in your dimension #{name}"
         end
         
+        level_index = hierarchy_levels[hierarchy_name].index(level)
+        if level_index.nil?
+          raise ArgumentError, "The level '#{level}' does not appear to exist"
+        end
+        
         q = nil
         # If the denominator_level is specified and it is not the last element
         # in the hierarchy then do a distinct count. If
@@ -152,15 +157,11 @@ module ActiveWarehouse #:nodoc
         # possible (in the context of a date dimension this would be each day)
         # and use the id to count.
         if denominator_level && hierarchy_levels[hierarchy_name].last != denominator_level
-          level_index = hierarchy_levels[hierarchy_name].index(level)
           denominator_index = hierarchy_levels[hierarchy_name].index(denominator_level)
-
-          if level_index.nil?
-            raise ArgumentError, "The level '#{level}' does not appear to exist"
-          end
           if denominator_index.nil?
             raise ArgumentError, "The denominator level '#{denominator_level}' does not appear to exist"
           end
+          
           if hierarchy_levels[hierarchy_name].index(denominator_level) < hierarchy_levels[hierarchy_name].index(level)
             raise ArgumentError, "The index of the denominator level '#{denominator_level}' in the hierarchy '#{hierarchy_name}' must be greater than or equal to the level '#{level}'"
           end
@@ -217,7 +218,7 @@ module ActiveWarehouse #:nodoc
 
         levels = hierarchy_levels[hierarchy_name]
         if levels.length <= parent_values.length
-          raise ArgumentError, "The parent_values '#{parent_values.to_yaml}' exceeds the hierarchy depth #{levels.to_yaml}"
+          raise ArgumentError, "The parent_values '#{parent_values.inspect}' equals or exceeds the hierarchy depth #{levels.inspect}"
         end
         
         child_level = levels[parent_values.length].to_s
