@@ -35,7 +35,7 @@ module ActiveWarehouse #:nodoc
           if !dimensions.include?(slowly_changing_over)
             raise "No dimension specified with name '#{slowly_changing_over}' in fact '#{self.name}', specify it first with dimension macro"
           end
-          relationship.slowly_changing_over = dimension_relationships[slowly_changing_over]
+          relationship.slowly_changing_over = dimension_relationship(slowly_changing_over)
         end
         
         dimension_relationships[association_id] = relationship
@@ -57,23 +57,24 @@ module ActiveWarehouse #:nodoc
       
       # returns true for the dimension relationship of +belongs_to+
       def belongs_to_relationship?(dimension_name)
-        dimension_relationships[dimension_name] and dimension_relationships[dimension_name].macro == :belongs_to  
+        dimension_relationship(dimension_name) and dimension_relationship(dimension_name).macro == :belongs_to  
       end
       
       # returns true for the dimension relationship of +has_and_belongs_to_many+
       def has_and_belongs_to_many_relationship?(dimension_name)
-        dimension_relationships[dimension_name] and dimension_relationships[dimension_name].macro == :has_and_belongs_to_many
+        dimension_relationship(dimension_name) and dimension_relationship(dimension_name).macro == :has_and_belongs_to_many
       end
       
       # returns the AssociationReflection for the specified dimension name
       def dimension_relationship(dimension_name)
-        dimension_relationships[dimension_name]
+        raise RuntimeError, "Dimension name is nil. This may mean that another class expects your fact to define the specified dimension relationship but the fact class does not." unless dimension_name
+        dimension_relationships[dimension_name.to_sym]
       end
 
       # returns the dimension name (as specified in the dimension macro)
       # which the specified +dimension_name+ is slowly changing over
       def slowly_changes_over_name(dimension_name)
-        dimension_relationships[dimension_name].slowly_changing_over.name
+        dimension_relationship(dimension_name).slowly_changing_over.name
       end
       
       # returns the Class for the dimension which the specified
@@ -100,7 +101,9 @@ module ActiveWarehouse #:nodoc
       # Returns the dimension class, given a dimension name from this fact.
       # Must appear as a registered dimension relationship.
       def dimension_class(dimension_name)
-        dimension_relationships[dimension_name.to_sym].class_name.constantize
+        dimension_relationship = dimension_relationship(dimension_name)
+        raise RuntimeError, "Dimension '#{dimension_name}' is not defined in #{self.name}" unless dimension_relationship
+        dimension_relationship.class_name.constantize
       end
       
       # Get the time when the fact source file was last modified
@@ -137,20 +140,19 @@ module ActiveWarehouse #:nodoc
       # Return the foreign key that the fact uses to relate back to the specified 
       # dimension. This is found using the dimension_relationships hash.
       def foreign_key_for(dimension_name)
-        dimension_relationships[dimension_name].primary_key_name
+        dimension_relationship(dimension_name).primary_key_name
       end
       
       # Define an aggregate. Also aliased from aggregate()
       # * <tt>field</tt>: The field name
       # * <tt>options</tt>: A hash of options for the aggregate
       def define_aggregate(field, options={})
-        if columns_hash[field.to_s].nil?
-          raise ArgumentError, "Field #{field} does not exist in table #{table_name}"
-        end
+        # if columns_hash[field.to_s].nil?
+        #           raise ArgumentError, "Field #{field} does not exist in table #{table_name}"
+        #         end
         options[:type] ||= :sum
         
-        aggregate_field = AggregateField.new(self, columns_hash[field.to_s],
-                                             options[:type], options)
+        aggregate_field = AggregateField.new(self, field, options[:type], options)
         aggregate_fields << aggregate_field
       end
       alias :aggregate :define_aggregate

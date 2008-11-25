@@ -23,10 +23,9 @@ module ActiveWarehouse #:nodoc:
     # +field_options+ is a hash of raw options from the original definition.
     # Options can include :label => a column alias or label for this field,
     # :table_alias for a table alias (useful for building queries)
-    def initialize(owning_class, name, type, field_options = {})
+    def initialize(owning_class, name, field_options = {})
       @owning_class = owning_class
       @name = name
-      @type = type
       @field_options = field_options
       @label = field_options[:label]
       @table_alias = field_options[:table_alias]
@@ -39,14 +38,21 @@ module ActiveWarehouse #:nodoc:
       @label ? @label : "#{table_alias || from_table_name}_#{name}"
     end
     
-    # returns name of this field, matches name of the column
-    def name
-      @name
-    end
-    
     # returns rails specific column type, e.g. :float or :string
     def column_type
-      @type
+      @type ||= column_definition.type
+    end
+    
+    def limit
+      @limit ||= column_definition.limit
+    end
+    
+    def scale
+      @scale ||= column_definition.scale
+    end
+    
+    def precision
+      @precision ||= column_definition.precision
     end
     
     # convert the label into something we can use in a table.
@@ -68,6 +74,11 @@ module ActiveWarehouse #:nodoc:
     # Get a display string for the field. Delegates to label.
     def to_s
       label
+    end
+    
+    protected
+    def column_definition
+      owning_class.columns_hash[name]
     end
     
   end

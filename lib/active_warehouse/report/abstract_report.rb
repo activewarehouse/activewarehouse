@@ -1,7 +1,7 @@
 module ActiveWarehouse #:nodoc:
   module Report #:nodoc:
     # Base module for reports.
-    module AbstractReport
+    class AbstractReport
       attr_accessor :title
       attr_accessor :cube_name
       attr_accessor :column_dimension_name
@@ -41,6 +41,17 @@ module ActiveWarehouse #:nodoc:
       
       # An optional conditions String
       attr_accessor :conditions
+      
+      def initialize(cube_name, column_dimension_name, row_dimension_name)
+        raise ArgumentError, "Cube name must be specified" unless cube_name
+        @cube_name = cube_name
+        
+        raise ArgumentError, "Column dimension name must be specified" unless column_dimension_name
+        @column_dimension_name = column_dimension_name
+        
+        raise ArgumentError, "Row dimension name must be specified" unless row_dimension_name
+        @row_dimension_name = row_dimension_name
+      end
 
       # Set the cube name
       def cube_name=(name)
@@ -50,8 +61,12 @@ module ActiveWarehouse #:nodoc:
 
       # Get the current cube instance
       def cube
+        unless cube_name
+          raise RuntimeError, "A report must specify its cube name"
+        end
+        
         @cube ||= begin
-          cube_class = ActiveWarehouse::Cube.class_name(self.cube_name).constantize
+          cube_class = ActiveWarehouse::Cube.class_name(cube_name).constantize
           cube_class.new
         end
       end
@@ -63,18 +78,19 @@ module ActiveWarehouse #:nodoc:
 
       # Get the column dimension class
       def column_dimension_class
-        @column_dimension_class ||= fact_class.dimension_class(self.column_dimension_name)
+        @column_dimension_class ||= fact_class.dimension_class(column_dimension_name)
       end
 
       # Get the column hierarchy. Uses the first hierarchy in the column 
       # dimension if not specified
       def column_hierarchy
-        ch = @column_hierarchy
-        if ch.nil? || ch == 'NULL'
-          column_dimension_class.hierarchies.first
-        else
-          ch
+        @column_hierarchy ||= begin
+          hierarchy = column_dimension_class.hierarchies.first
+          return hierarchy if hierarchy
+          raise RumtimeError, "#{column_dimension_class} does not appear to define any hierarchies"
         end
+        @column_hierarchy = column_dimension_class.hierarchies.first if @column_hierarchy == 'NULL' # what is this for?
+        @column_hierarchy
       end
       
       # Get the column prefix. Returns 'c' if not specified.
@@ -88,9 +104,15 @@ module ActiveWarehouse #:nodoc:
       end
       
       # Get the row hierarchy. Uses the first hierarchy in the row dimension if
-      # not specified
+      # not specified.
       def row_hierarchy
-        @row_hierarchy ||= row_dimension_class.hierarchies.first
+        @row_hierarchy ||= begin
+          hierarchy = row_dimension_class.hierarchies.first
+          return hierarchy if hierarchy
+          raise RuntimeError, "#{row_dimension_class} does not appear to define any hierarchies"
+        end
+        @row_hierarchy = row_dimension_class.hierarchies.first if @row_hierarchy == 'NULL' # what is this for?
+        @row_hierarchy
       end
       
       # Get the row parameter prefix. Returns 'r' if not specified.

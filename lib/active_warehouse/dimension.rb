@@ -53,15 +53,16 @@ module ActiveWarehouse #:nodoc
       # defined will be used as the default if no hierarchy is specified when
       # rendering a cube.
       def define_hierarchy(name, levels)
-        hierarchies << name
-        hierarchy_levels[name] = levels
+        hierarchies << name.to_sym
+        hierarchy_levels[name.to_sym] = levels
       end
       
       # Get the named attribute hierarchy. Returns an array of column names.
       # 
       # Example: hierarchy(:fiscal_calendar) might return [:fiscal_year, :fiscal_quarter, :fiscal_month]
       def hierarchy(name)
-        hierarchy_levels[name]
+        raise RuntimeError, "You must specify a hierarchy name" unless name
+        hierarchy_levels[name.to_sym]
       end
       
       # Get the ordered hierarchy names
@@ -170,11 +171,12 @@ module ActiveWarehouse #:nodoc
         else
           q = "select #{level} as level, count(id) as level_count from #{table_name} group by #{level}"
         end
-        denominators = {}
-        connection.select_all(q).each do |row|
-          denominators[row['level']] = row['level_count'].to_i
+        
+        returning Hash.new do |denominators|
+          connection.select_all(q).each do |row|
+            denominators[row['level']] = row['level_count'].to_i
+          end
         end
-        denominators
       end
       
       # Get the foreign key for this dimension which is used in Fact tables.
@@ -198,12 +200,13 @@ module ActiveWarehouse #:nodoc
         order = level_orders[level] || self.order || level
         
         options = {:select => "distinct #{order.to_s == level.to_s ? '' : order.to_s+','} #{level}", :order => order}
-        values = []
-        find(:all, options).each do |dim|
-          value = dim.send(level_method)
-          values << dim.send(level_method) unless values.include?(value)
+        
+        returning Array.new do |values|
+          find(:all, options).each do |dim|
+            value = dim.send(level_method)
+            values << dim.send(level_method) unless values.include?(value)
+          end
         end
-        values.to_a
       end
       
       # Get an array of child values for a particular parent in the hierachy

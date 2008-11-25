@@ -22,6 +22,8 @@ module ActiveWarehouse #:nodoc:
         @stage = (params[:stage] || report.send("#{dimension_type}_stage")).to_i
         
         @hierarchy = @dimension_class.hierarchy(@hierarchy_name)
+        raise RuntimeError, "#{@dimension_class} does not define the hierarchy #{@hierarchy_name}" unless @hierarchy
+        
         @hierarchy_length = @hierarchy.length
         @hierarchy_level = @hierarchy[@stage]
         @params = params

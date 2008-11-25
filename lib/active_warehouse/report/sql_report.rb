@@ -1,8 +1,7 @@
 module ActiveWarehouse #:nodoc:
   module Report #:nodoc:
     # A report which displays the SQL used to generate a tabular report.
-    class SqlReport
-      include AbstractReport
+    class SqlReport < AbstractReport
       
       # AbstractReport seems to assume it will be mixed into an
       # ActiveRecord::Base subclass -- it uses read_attribute (which

@@ -28,9 +28,11 @@ class DimensionTest < Test::Unit::TestCase
         assert_equal ["Bacon"], StoreDimension.available_child_values(:location, ["South", "Georgia"])
       end
       should "raise an error if the hierarchy depth is exceeded" do
-        assert_raise ArgumentError do
-          StoreDimension.available_child_values(:location, ["South", "Georgia", "Bacon"])
+        parent_values = ["South", "Georgia", "Bacon"]
+        e = assert_raise ArgumentError do
+          StoreDimension.available_child_values(:location, parent_values)
         end
+        assert_equal "The parent_values '#{parent_values.inspect}' equals or exceeds the hierarchy depth #{StoreDimension.hierarchy(:location).inspect}", e.message
       end
     end
     context "the interface for retrieving a tree of available values" do

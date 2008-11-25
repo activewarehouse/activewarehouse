@@ -20,7 +20,6 @@ module ActiveWarehouse #:nodoc:
         @ignore_columns = options.has_key?(:ignore_columns) ? options[:ignore_columns] : []
         @column_crumbs = ColumnCrumb.gather(@column_dimension, @current_params)
         @row_crumbs = RowCrumb.gather(@row_dimension, @current_params)
-        @query_result = execute_query
         
         @fact_attributes = report.fact_attributes.map do |fact_attribute|
           case fact_attribute
@@ -32,6 +31,10 @@ module ActiveWarehouse #:nodoc:
             fact_attribute  
           end     
         end
+      end
+      
+      def query_result
+        @query_result ||= execute_query
       end
       
       def execute_query

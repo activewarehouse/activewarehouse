@@ -1,7 +1,6 @@
 module ActiveWarehouse #:nodoc:
   module Report #:nodoc:
-    class ChartReport #:nodoc:
-      include AbstractReport
+    class ChartReport < AbstractReport #:nodoc:
     end
   end
 end

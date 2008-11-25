@@ -1,9 +1,7 @@
 module ActiveWarehouse #:nodoc:
   module Report #:nodoc:
     # A report which is used to represent a tabular report.
-    class TableReport
-      include AbstractReport
-      
+    class TableReport < AbstractReport
       attr_accessor :format
       attr_accessor :link_cell
       attr_accessor :html_params
@@ -23,7 +21,7 @@ module ActiveWarehouse #:nodoc:
         @html_params ||= {}
       end
 
-      def view(params, options = {})
+      def view(params={}, options = {})
         if options.has_key?(:sortable_with_totals)
           options[:sortable] = true
           options[:with_totals] = true

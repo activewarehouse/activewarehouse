@@ -57,6 +57,10 @@ class DimensionTest < Test::Unit::TestCase
       assert_equal 3, location_hierarchy.length
       assert_equal [:store_region, :store_state, :store_county], location_hierarchy
     end
+    should "raise an error if a nil hierarchy is provided" do
+      e = assert_raise(RuntimeError) { StoreDimension.hierarchy(nil) }
+      assert_equal "You must specify a hierarchy name", e.message
+    end
     should "provide a hierarchies collection" do
       assert_equal 1, StoreDimension.hierarchies.length
     end
@@ -68,38 +72,31 @@ class DimensionTest < Test::Unit::TestCase
     end
     context "for the denominator_count feature" do
       should "raise an error if there is no hierarchy levels for the given hierarchy name" do
-        begin
-          StoreDimension.denominator_count(:foo, :bar)
-          fail "ArgumentError expected but not raised"
-        rescue ArgumentError => e
-          assert_equal "The hierarchy 'foo' does not exist in your dimension StoreDimension", e.message
-        end
+        e = assert_raise(ArgumentError) { StoreDimension.denominator_count(:foo, :bar) }
+        assert_equal "The hierarchy 'foo' does not exist in your dimension StoreDimension", e.message
       end
       should "raise an error if the specified level does not exist" do
-        begin
-          StoreDimension.denominator_count(:location, :foo)
-        rescue ArgumentError => e
-          assert_equal "The level 'foo' does not appear to exist", e.message
-        end
+        e = assert_raise(ArgumentError) { StoreDimension.denominator_count(:location, :foo) }
+        assert_equal "The level 'foo' does not appear to exist", e.message
+      end
+      should "raise an error if the specified denominator level does not exist" do
+        e = assert_raise(ArgumentError) { StoreDimension.denominator_count(:location, :store_region, :foo) }
+        assert_equal "The denominator level 'foo' does not appear to exist", e.message
+      end
+      should "raise an error if the specified denominator level index is less than the level index" do
+        e = assert_raise(ArgumentError) { StoreDimension.denominator_count(:location, :store_state, :store_region) }
+        assert_equal "The index of the denominator level 'store_region' in the hierarchy 'location' must be greater than or equal to the level 'store_state'", e.message
       end
     end
     context "for the available_child_values feature" do
       should "raise an error if there is no hierarchy levels for the given hierarchy name" do
-        begin
-          StoreDimension.available_child_values(:foo, [])
-          fail "ArgumentError expected but not raised"
-        rescue ArgumentError => e
-          assert_equal "The hierarchy 'foo' does not exist in your dimension StoreDimension", e.message
-        end
+        e = assert_raise(ArgumentError) { StoreDimension.available_child_values(:foo, []) }
+        assert_equal "The hierarchy 'foo' does not exist in your dimension StoreDimension", e.message
       end
       should "raise an error if the levels exceeds the hierarchy depth" do
         parent_values = ['South', 'Florida', 'Miami-Dade']
-        begin
-          StoreDimension.available_child_values(:location, parent_values)
-          fail "ArgumentError expected but not raised"
-        rescue ArgumentError => e
-          assert_equal "The parent_values '#{parent_values.inspect}' equals or exceeds the hierarchy depth #{StoreDimension.hierarchy_levels[:location].inspect}", e.message
-        end
+        e = assert_raise(ArgumentError) { StoreDimension.available_child_values(:location, parent_values) }
+        assert_equal "The parent_values '#{parent_values.inspect}' equals or exceeds the hierarchy depth #{StoreDimension.hierarchy_levels[:location].inspect}", e.message
       end
     end
   end

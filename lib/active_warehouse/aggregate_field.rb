@@ -10,12 +10,8 @@ module ActiveWarehouse
     # column.
     # +strategy_name+ is the name of th aggregation strategy to be used, defaults to :sum
     # +field_options+ is a hash of raw options from the original aggregate definition.
-    def initialize(fact_class, column_definition, strategy_name = :sum, field_options = {})
-      super(fact_class, column_definition.name, column_definition.type, field_options)
-      @column_definition = column_definition
-      @limit = column_definition.limit
-      @scale = column_definition.scale
-      @precision = column_definition.precision
+    def initialize(fact_class, name, strategy_name=:sum, field_options = {})
+      super(fact_class, name, field_options)
       @strategy_name = strategy_name
     end
     
@@ -53,7 +49,7 @@ module ActiveWarehouse
     
     # Typecast the specified value using the column definition
     def type_cast(value)
-      @column_definition.type_cast(value)
+      column_definition.type_cast(value)
     end
   end
 end

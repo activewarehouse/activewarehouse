@@ -97,9 +97,14 @@ module ActiveWarehouse
         agg_fields = fact_class.aggregate_fields.reject {|field| !pivot_on_hierarchical_dimension? and !field.levels_from_parent.empty? } 
         dims.each do |dim|
           if !dim.blank? and fact_class.has_and_belongs_to_many_relationship?(dim.to_sym)
-            return agg_fields.reject {|field| !field.is_count_distinct?}
+            agg_fields = agg_fields.reject {|field| !field.is_count_distinct?}
+            if agg_fields.empty?
+              raise RuntimeError, "Due to #{fact_class}.has_and_belongs_to_many relationship, no aggregates are visible"
+            end
+            return agg_fields
           end
         end
+        raise RuntimeError, "#{fact_class} does not appear to define any aggregate fields" if agg_fields.empty?
         agg_fields
       end
       
