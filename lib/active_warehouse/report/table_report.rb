@@ -1,10 +1,9 @@
 module ActiveWarehouse #:nodoc:
   module Report #:nodoc:
     # A report which is used to represent a tabular report.
-    class TableReport < ActiveRecord::Base
+    class TableReport
       include AbstractReport
-      before_save :to_storage
-      after_save :from_storage
+      
       attr_accessor :format
       attr_accessor :link_cell
       attr_accessor :html_params
@@ -24,15 +23,15 @@ module ActiveWarehouse #:nodoc:
         @html_params ||= {}
       end
 
-			def view(params, options = {})
-				if options.has_key?(:sortable_with_totals)
-					options[:sortable] = true
-					options[:with_totals] = true
-					options.delete(:sortable_with_totals)
-				end
-				
-				ActiveWarehouse::View::TableView.new(self, params, options)
-			end
+      def view(params, options = {})
+        if options.has_key?(:sortable_with_totals)
+          options[:sortable] = true
+          options[:with_totals] = true
+          options.delete(:sortable_with_totals)
+        end
+        
+        ActiveWarehouse::View::TableView.new(self, params, options)
+      end
     end
   end
 end
