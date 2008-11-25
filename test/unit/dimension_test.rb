@@ -24,7 +24,11 @@ class DimensionTest < Test::Unit::TestCase
     should "return the same dimension that is provided when a class is sent to to_dimension" do
       assert_equal StoreDimension, ActiveWarehouse::Dimension.to_dimension(StoreDimension)
     end
+    should "convert a String to a dimension subclass" do
+      assert_equal StoreDimension, ActiveWarehouse::Dimension.to_dimension('store')
+    end
   end
+  
   context "a subclass of Dimension called StoreDimension" do
     should "give a singular table name" do
       assert_equal "store_dimension", StoreDimension.table_name
@@ -70,6 +74,7 @@ class DimensionTest < Test::Unit::TestCase
     should "provide the correct foreign key" do
       assert_equal 'store_id', StoreDimension.foreign_key
     end
+    
     context "for the denominator_count feature" do
       should "raise an error if there is no hierarchy levels for the given hierarchy name" do
         e = assert_raise(ArgumentError) { StoreDimension.denominator_count(:foo, :bar) }
@@ -88,6 +93,7 @@ class DimensionTest < Test::Unit::TestCase
         assert_equal "The index of the denominator level 'store_region' in the hierarchy 'location' must be greater than or equal to the level 'store_state'", e.message
       end
     end
+    
     context "for the available_child_values feature" do
       should "raise an error if there is no hierarchy levels for the given hierarchy name" do
         e = assert_raise(ArgumentError) { StoreDimension.available_child_values(:foo, []) }
