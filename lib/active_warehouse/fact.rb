@@ -19,7 +19,10 @@ module ActiveWarehouse #:nodoc
       
       # Array of belongs_to +Reflection+ instances that represent the
       # dimensions for this fact.
-      attr_accessor :dimension_relationships
+      def dimension_relationships
+        @dimension_relationships ||= []
+      end
+      private :dimension_relationships
       
       # Acts as an alias for +belongs_to+, yet marks this relationship
       # as a dimension.  You must call +dimension+ instead of +belongs_to+.

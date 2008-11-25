@@ -314,7 +314,8 @@ module ActiveWarehouse #:nodoc
       end
       
       public
-      # Expire the value tree cache. This should be called if the dimension
+      # Expire the value tree cache. This should be called if the data in the underlying dimension
+      # has been updated and the in-memory cache is stale.
       def expire_value_tree_cache
         @value_tree_cache = nil
       end
