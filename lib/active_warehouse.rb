@@ -29,10 +29,9 @@ $:.unshift(File.dirname(__FILE__)) unless
   $:.include?(File.dirname(__FILE__)) || $:.include?(File.expand_path(File.dirname(__FILE__)))
 
 require 'rubygems'
+require 'rails'
 require 'active_support'
 require 'active_record'
-
-$:.unshift(File.dirname(__FILE__) + "/../../actionpack/lib")
 require 'action_pack'
 require 'action_controller'
 require 'action_view'

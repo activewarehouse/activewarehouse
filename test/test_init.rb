@@ -3,33 +3,16 @@ $:.unshift(File.dirname(__FILE__)) unless
   $:.include?(File.dirname(__FILE__)) || $:.include?(File.expand_path(File.dirname(__FILE__)))
 
 require 'rubygems'
-unless Kernel.respond_to?(:gem)
-  Kernel.send :alias_method, :gem, :require_gem
-end
 
-require 'rails_generator'
-Rails::Generator::Base.append_sources(
-  Rails::Generator::PathSource.new(:active_warehouse_test, "#{File.dirname(__FILE__)}/../generators/")
-)
-
-# unless defined?(ActiveSupport)
-#   begin
-#     $:.unshift(File.dirname(__FILE__) + "/../../activesupport/lib")  
-#     require 'active_support'  
-#   rescue LoadError
-#     gem 'activesupport'
-#   end
-# end
+# require 'rails_generator'
+# Rails::Generator::Base.append_sources(
+#   Rails::Generator::PathSource.new(:active_warehouse_test, "#{File.dirname(__FILE__)}/../generators/")
+# )
 # 
-unless defined?(ActiveRecord)
-  begin
-    $:.unshift(File.dirname(__FILE__) + "/../../activerecord/lib")
-    require 'active_record'
-  rescue LoadError
-    gem 'activerecord'
-  end
-end
-
+require 'rails'
+require 'active_support'  
+require 'active_record'
+require 'action_view'
 require 'pp'
 require 'test/unit'
 

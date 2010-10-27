@@ -35,6 +35,7 @@ module ActiveWarehouse #:nodoc:
       # * <tt>:expiration_date</tt>: Define the attribute name which represents the expiration date column
       #
       def acts_as_slowly_changing_dimension(options = {})
+
         unless slowly_changing_dimension? # don't let AR call this twice
           cattr_accessor :identifier
           cattr_accessor :latest_version_attribute
@@ -44,22 +45,31 @@ module ActiveWarehouse #:nodoc:
           self.latest_version_attribute = options[:with] || :latest_version
           self.effective_date_attribute = options[:effective_date_attribute] || :effective_date
           self.expiration_date_attribute = options[:expiration_date_attribute] || :expiration_date
-          class << self
-            alias_method :find_every_with_older,    :find_every
-            alias_method :calculate_with_older,     :calculate
-            alias_method :core_validate_find_options, :validate_find_options
-            VALID_FIND_OPTIONS << :with_older
-            VALID_FIND_OPTIONS << :valid_on
-            VALID_FIND_OPTIONS << :valid_during
-          end
+
+          default_scope :conditions =>{self.latest_version_attribute => true}
+          
+          scope :valid_on, lambda { |valid_on|
+            where("? between #{effective_date_attribute} and #{expiration_date_attribute}", valid_on)
+          }
+
+          scope :valid_during, lambda { |valid_during|
+            where("(? between #{effective_date_attribute} and #{expiration_date_attribute})" +
+                  " or (#{effective_date_attribute} between ? and ?)",
+                  valid_during.first, valid_during.first, valid_during.last)
+          }
+          
         end
+        
+        
         include InstanceMethods
+        
       end
       
       # Return true if this dimension is a slowly changing dimension
       def slowly_changing_dimension?
         self.included_modules.include?(InstanceMethods)
       end
+      
     end
 
     module InstanceMethods #:nodoc:
@@ -76,72 +86,15 @@ module ActiveWarehouse #:nodoc:
 
       module ClassMethods
         def find_with_older(*args)
-          options = extract_options_from_args!(args)
-          validate_find_options(options)
-          set_readonly_option!(options)
-          options[:with_older] = true # yuck!
-
-          case args.first
-            when :first then find_initial(options)
-            when :all   then find_every(options)
-            else             find_from_ids(args, options)
-          end
+          self.unscoped.find(args)
         end
 
         def count_with_older(*args)
-          calculate_with_older(:count, *construct_count_options_from_legacy_args(*args))
+          self.unscoped.count(args)
         end
-
-        def count(*args)
-          with_older_scope { count_with_older(*args) }
-        end
-
-        def calculate(*args)
-          with_older_scope { calculate_with_older(*args) }
-        end
-
-        protected
-          def with_older_scope(&block)
-            with_scope({:find => { :conditions =>
-                  ["#{table_name}.#{latest_version_attribute} = ?", true] } }, :merge, &block)
-          end
-          
-          def with_valid_on_scope(valid_on, &block)
-            with_scope({:find => { :conditions =>
-                  ["? between #{effective_date_attribute} " +
-                  "and #{expiration_date_attribute}", valid_on]} }, :merge, &block)
-          end
-          
-          def with_valid_during_scope(valid_during, &block)
-            with_scope({:find => {:conditions =>
-                  ["(? between #{effective_date_attribute} and #{expiration_date_attribute})" +
-                  " or (#{effective_date_attribute} between ? and ?)",
-                  valid_during.first, valid_during.first, valid_during.last]} }, :merge, &block)
-          end
-
-        private
-          # all find calls lead here
-          def find_every(options)
-            if options.include?(:valid_on)
-              with_valid_on_scope(options[:valid_on]) { find_every_with_older(options) }
-            elsif options.include?(:valid_during)
-              if !options.include?(:order)
-                options[:order] = "#{effective_date_attribute} asc"
-              end
-              if !options.include?(:limit)
-                options[:limit] = 1
-              end
-              if !options.include?(:offset)
-                options[:offset] = 0
-              end
-              with_valid_during_scope(options[:valid_during]) { find_every_with_older(options) }
-            elsif options.include?(:with_older)
-              find_every_with_older(options)
-            else
-              with_older_scope { find_every_with_older(options) }
-            end
-          end
-      end
+        
+      end # ClassMethods
+      
     end
   end
 end
