@@ -28,11 +28,11 @@ module ActiveWarehouse
           case dimension
           when Symbol, String
             dimensions << dimension.to_sym
-            dimensions_hierarchies[dimension.to_sym] = fact_class.dimension_class(dimension).hierarchies
+            dimensions_hierarchies[dimension.to_sym] = fact_class.dimension_class(dimension).hierarchies.first
           when Hash
             dimension_name = dimension.keys.first.to_sym
             dimensions << dimension_name
-            dimensions_hierarchies[dimension_name] = [dimension[dimension_name]].flatten
+            dimensions_hierarchies[dimension_name] = dimension[dimension_name]
           else
             raise ArgumentError, "Each argument to pivot_on must be a symbol, string or Hash"
           end
@@ -59,7 +59,7 @@ module ActiveWarehouse
       
       # Populate the data warehouse.  Delegate to aggregate.populate
       def populate(options={})
-        aggregate.populate
+        aggregate.populate(options.reverse_merge(@aggregate_options))
       end
       
       # Get the dimensions that this cube pivots on
@@ -73,7 +73,7 @@ module ActiveWarehouse
         if @dimensions_hierarchies.nil?
           @dimensions_hierarchies = OrderedHash.new
           dimensions.each do |dimension|
-            @dimensions_hierarchies[dimension] = fact_class.dimension_class(dimension).hierarchies
+            @dimensions_hierarchies[dimension] = fact_class.dimension_class(dimension).hierarchies.first
           end
         end
         @dimensions_hierarchies
@@ -188,10 +188,15 @@ module ActiveWarehouse
         @aggregate ||= ActiveWarehouse::Aggregate::NoAggregate.new(self)
       end
       
-      def aggregate_class(agg_class)
+      def aggregate_class(agg_class, options={})
         @aggregate = agg_class.new(self)
+        @aggregate_options = options
       end
       
+      def aggregate_options
+        @aggregate_options || {}
+      end
+            
     end
     
     public
@@ -202,7 +207,7 @@ module ActiveWarehouse
     # to the where clause. TODO: this may eventually be converted to another
     # query language.
     #
-    # The cstage value represents the current  column drill down stage and 
+    # The cstage value represents the current column drill down stage and 
     # defaults to 0.
     # 
     # The rstage value represents the current row drill down stage and defaults 

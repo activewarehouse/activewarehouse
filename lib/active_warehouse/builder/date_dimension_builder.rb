@@ -55,10 +55,11 @@ module ActiveWarehouse #:nodoc:
         record[:day_number_in_fiscal_year] = time.fiscal_year_yday(fiscal_year_offset_month)
         #record[:last_day_in_week_indicator] = 
         #record[:last_day_in_month_indicator] =
-        #record[:calendar_week_ending_date] = 
         record[:calendar_week] = "Week #{time.week}"
         record[:calendar_week_number] = time.week
         record[:calendar_week_number_in_year] = time.week # DEPRECATED
+        record[:calendar_week_start_date] = date.beginning_of_week
+        record[:calendar_week_end_date] = date.end_of_week
         record[:calendar_month_name] = time.strftime("%B")
         record[:calendar_month_number_in_year] = time.month # DEPRECATED
         record[:calendar_month_number] = time.month

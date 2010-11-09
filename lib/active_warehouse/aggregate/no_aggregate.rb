@@ -4,8 +4,9 @@ module ActiveWarehouse #:nodoc:
   module Aggregate #:nodoc:
     # An aggregate which goes directly to the fact and dimensions to answer questions
     class NoAggregate < Aggregate
+      
       # Populate the aggregate (in this case it is a no-op implementation)
-      def populate
+      def populate(options={})
         # do nothing
       end
       

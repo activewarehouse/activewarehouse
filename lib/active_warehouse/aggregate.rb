@@ -16,6 +16,9 @@ module ActiveWarehouse #:nodoc:
         @cube_class = cube_class
       end
       
+      def populate(options={})
+      end
+      
       # Helper that accepts two ActiveWarehouse::Report::Dimension
       # objects, deconstructs them, and passes them on to +query+
       # (implemented in inherited classes).  This provides a
@@ -73,3 +76,6 @@ require 'active_warehouse/aggregate/no_aggregate'
 require 'active_warehouse/aggregate/dwarf_common'
 require 'active_warehouse/aggregate/dwarf_aggregate'
 require 'active_warehouse/aggregate/pid_aggregate'
+require 'active_warehouse/aggregate/rolap_common'
+require 'active_warehouse/aggregate/rolap_aggregate'
+require 'active_warehouse/aggregate/pipelined_rolap_aggregate'
