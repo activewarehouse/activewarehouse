@@ -28,7 +28,6 @@ module ActiveWarehouse #:nodoc:
         rstage = options[:rstage] || 0
         filters = options[:filters] || {}
         
-        fact_class = cube_class.fact_class
         column_dimension = fact_class.dimension_class(column_dimension_name)
         column_hierarchy = column_dimension.hierarchy(column_hierarchy_name)
         row_dimension = fact_class.dimension_class(row_dimension_name)

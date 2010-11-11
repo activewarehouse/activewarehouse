@@ -14,11 +14,98 @@ module ActiveWarehouse #:nodoc
     # 
     # E.g.
     # ABCD -> ABC -> AB -> A -> *all*
-    class PipelinedRolapAggregate < Aggregate
+    class PipelinedRolapAggregate < NoAggregate
       include RolapCommon
       
       attr_accessor :new_records_only, :new_records_dimension, :new_records_record
-      
+
+      def query(*args)
+        options = parse_query_args(*args)
+
+        column_dimension_name = options[:column_dimension_name] || options[:column]
+        row_dimension_name = options[:row_dimension_name] || options[:row]
+        
+        # throw an error if there is no column and/or row
+        cstage = options[:cstage] || 0
+        rstage = options[:rstage] || 0
+        filters = options[:filters] || {}
+        conditions = options[:conditions] || ""
+        
+        column_dimension = fact_class.dimension_class(column_dimension_name)
+        column_hierarchy = dimension_hierarchy(column_dimension_name)        
+        row_dimension = fact_class.dimension_class(row_dimension_name)
+        row_hierarchy = dimension_hierarchy(row_dimension_name)
+
+        dimension_levels = {}
+        dimension_levels[column_dimension] = [(cstage + 1), column_hierarchy.count].min
+        dimension_levels[row_dimension] = [(rstage + 1), row_hierarchy.count].min
+
+        current_column_name = column_hierarchy[cstage]
+        current_row_name = row_hierarchy[rstage]
+        full_column_name = "#{column_dimension_name}_#{current_column_name}"
+        full_row_name = "#{row_dimension_name}_#{current_row_name}"
+
+        # build the where clause
+        where_clause = []
+        where_clause << "#{full_column_name} is not null"
+        where_clause << "#{full_row_name} is not null"
+
+        # process all filters
+        filters.each do |key, value|
+          dimension_name, column = key.split('.')
+
+          dim_class     = fact_class.dimension_class(dimension_name.to_sym)
+          dim_hierarchy = dimension_hierarchy(dimension_name.to_sym)
+          dim_level     = dim_hierarchy.index(column.to_sym)
+          name          = "#{dimension_name}_#{column}"
+          
+          if dim_level
+            if value
+              where_clause << "#{name} = #{connection.quote(value)}"
+            else
+              where_clause << "#{name} is null"
+            end
+            
+            unless [column_dimension_name, row_dimension_name].include?(dimension_name)
+              current_level = dimension_levels[dim_class] || 0
+              dimension_levels[dim_class] = [current_level, (dim_level + 1)].max
+            end
+
+          end
+          
+        end
+
+        aggregate_levels = aggregate_dimension_fields.collect{ |dim, levels| 
+          [[(dimension_levels[dim] || 0), levels.count].min, 0].max
+        }
+
+        query_table_name = aggregate_rollup_name(aggregate_table_name, aggregate_levels)
+
+        # build the SQL query
+        sql = ''
+        sql += "SELECT\n"
+        sql += "#{full_column_name} AS #{current_column_name},\n"
+        sql += "#{full_row_name} AS #{current_row_name},\n"
+        sql += (aggregate_fields.collect{|c| "#{c.label_for_table} as '#{c.label}'"}.join(",\n") + "\n")
+        sql += "FROM #{query_table_name}\n"
+        sql += "WHERE (#{where_clause.join(" AND\n")})\n" if where_clause.length > 0
+
+        if conditions
+          sql += " AND\n (#{conditions})"
+        end
+        
+        # execute the query and return the results as a CubeQueryResult object
+        result = ActiveWarehouse::CubeQueryResult.new(aggregate_fields)
+        rows = connection.select_all(sql)
+        rows.each do |row|
+          result.add_data(row.delete(current_row_name.to_s),
+                          row.delete(current_column_name.to_s),
+                          row) # the rest of the members of row are the fact columns
+        end
+        result
+      end
+
+
       # Build and populate the data store
       def populate(options={})
         puts "PipelinedRolapAggregate::populate #{options.inspect}"
@@ -200,13 +287,13 @@ SQL
 
         sql = sql + q
         
-        puts sql + "\n--------------------------------------------------------------------------------\n"
+        # puts sql + "\n--------------------------------------------------------------------------------\n"
         connection.execute(sql)
       
         # TODO: remove the appropriate records
         # if new rec only, and (0) fields for the new rec dim, truncate table before loading, as this is a full load.
         if delete_sql
-          puts delete_sql + "\n--------------------------------------------------------------------------------\n"
+          # puts delete_sql + "\n--------------------------------------------------------------------------------\n"
           connection.execute(delete_sql)
         end
         
@@ -261,11 +348,10 @@ SQL
         dim_cols = OrderedHash.new
         
         cube_class.dimensions_hierarchies.each do |dimension_name, hierarchy_name|
-          dimension_class = cube_class.fact_class.dimension_class(dimension_name)
+          dimension_class = fact_class.dimension_class(dimension_name)
           dim_cols[dimension_class] = []
 
-          levels = hierarchy_name ? dimension_class.hierarchy_levels[hierarchy_name] || [hierarchy_name] : ['id']
-          levels.uniq.each do |level|
+          dimension_hierarchy(dimension_name).each do |level|
             # puts "level.to_s = #{level.to_s}"
             column = dimension_class.columns_hash[level.to_s]
             dim_cols[dimension_class] << Field.new( dimension_class,
@@ -275,6 +361,13 @@ SQL
           end
         end
         dim_cols
+      end
+      
+      def dimension_hierarchy(dimension_name)
+        hierarchy_name = cube_class.dimensions_hierarchies[dimension_name]
+        dimension_class = fact_class.dimension_class(dimension_name)
+        levels = hierarchy_name ? dimension_class.hierarchy_levels[hierarchy_name] || [hierarchy_name] : ['id']
+        levels.uniq
       end
       
     end

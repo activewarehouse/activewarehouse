@@ -4,5 +4,4 @@ class RollupSalesTransactionsCube < ActiveWarehouse::Cube
   reports_on :pos_retail_sales_transaction
 
   pivots_on({:date=>:rollup}, {:store=>:region}, {:product=>:product_id})
-  
 end

@@ -233,7 +233,7 @@ module ActiveWarehouse #:nodoc
       def populate
         prejoin_fact.populate
       end
-
+      
     end
   end
 end
