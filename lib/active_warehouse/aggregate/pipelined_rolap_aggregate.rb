@@ -24,12 +24,21 @@ module ActiveWarehouse #:nodoc
 
         column_dimension_name = options[:column_dimension_name] || options[:column]
         row_dimension_name = options[:row_dimension_name] || options[:row]
+
+        # if they try to query a hierarchy not in this cube, fallback on super (no_aggregate) query method
+        ach = options[:column_hierarchy_name]
+        cch = cube_class.dimensions_hierarchies[column_dimension_name]
+        arh = options[:row_hierarchy_name]
+        crh = cube_class.dimensions_hierarchies[row_dimension_name]
+        if ((ach && (ach != cch)) ||(arh && (arh != crh)))
+          return super
+        end
         
         # throw an error if there is no column and/or row
         cstage = options[:cstage] || 0
         rstage = options[:rstage] || 0
         filters = options[:filters] || {}
-        conditions = options[:conditions] || ""
+        conditions = options[:conditions] || nil
         
         column_dimension = fact_class.dimension_class(column_dimension_name)
         column_hierarchy = dimension_hierarchy(column_dimension_name)        
@@ -83,15 +92,15 @@ module ActiveWarehouse #:nodoc
 
         # build the SQL query
         sql = ''
-        sql += "SELECT\n"
-        sql += "#{full_column_name} AS #{current_column_name},\n"
-        sql += "#{full_row_name} AS #{current_row_name},\n"
-        sql += (aggregate_fields.collect{|c| "#{c.label_for_table} as '#{c.label}'"}.join(",\n") + "\n")
-        sql += "FROM #{query_table_name}\n"
-        sql += "WHERE (#{where_clause.join(" AND\n")})\n" if where_clause.length > 0
+        sql << "SELECT\n"
+        sql << "#{full_column_name} AS #{current_column_name},\n"
+        sql << "#{full_row_name} AS #{current_row_name},\n"
+        sql << (aggregate_fields.collect{|c| "#{c.label_for_table} as '#{c.label}'"}.join(",\n") + "\n")
+        sql << "FROM #{query_table_name}\n"
+        sql << "WHERE (#{where_clause.join(" AND\n")})" if where_clause.length > 0
 
         if conditions
-          sql += " AND\n (#{conditions})"
+          sql << " AND\n (#{conditions})"
         end
         
         # execute the query and return the results as a CubeQueryResult object
@@ -108,7 +117,7 @@ module ActiveWarehouse #:nodoc
 
       # Build and populate the data store
       def populate(options={})
-        puts "PipelinedRolapAggregate::populate #{options.inspect}"
+        # puts "PipelinedRolapAggregate::populate #{options.inspect}"
         @new_records_record = nil
 
         # see if the options mean to do new records only
@@ -198,7 +207,7 @@ module ActiveWarehouse #:nodoc
 
         dimension_column_names = []
         dimension_column_group_names = []
-        where = []
+        where_clause = ""
         delete_sql = nil
         
         if (options[:use_fact])
@@ -239,7 +248,7 @@ module ActiveWarehouse #:nodoc
                 delete_fields << "(#{field.label} >= '#{new_rec_value}')"
 
               end
-              where = "WHERE\t\t(" + new_rec_fields.join(" AND\n\t\t") + ") "
+              where_clause = "WHERE\t\t(" + new_rec_fields.join(" AND\n\t\t") + ") "
               delete_sql = "DELETE FROM\t#{target_rollup}\nWHERE\t\t(" + delete_fields.join(" AND\n\t\t") + ") "
             else
               delete_sql = "TRUNCATE TABLE #{target_rollup}"
@@ -267,27 +276,22 @@ module ActiveWarehouse #:nodoc
           end
         end
 
-        sql = <<-SQL
-SELECT#{"\t\t" + (dimension_column_names + aggregate_column_names).join(",\n\t\t")}
-FROM#{"\t\t" + from_tables_and_joins}
-#{where}
-#{"GROUP BY" if (dimension_column_names && (dimension_column_names.size > 0))}
-#{"\t\t" + dimension_column_group_names.join(",\n\t\t")}
-SQL
-
         outfile = aggregate_temp_file(target_rollup)
-        q = "\nINTO OUTFILE '#{outfile}'"
-        if options[:fields]
-          q << " FIELDS"
-          q << " TERMINATED BY '#{options[:fields][:delimited_by]}'" if options[:fields][:delimited_by]
-          q << " ENCLOSED BY '#{options[:fields][:enclosed_by]}'" if options[:fields][:enclosed_by]
-        end
-        q << " IGNORE #{options[:ignore]} LINES" if options[:ignore]
-        q << " (#{options[:columns].join(',')})" if options[:columns]
 
-        sql = sql + q
+        sql =  "SELECT\t\t#{(dimension_column_names + aggregate_column_names).join(",\n\t\t")}\n"
+        sql << "FROM\t\t#{from_tables_and_joins}\n"
+        sql << where_clause + "\n"
+        sql << "GROUP BY\t#{dimension_column_group_names.join(",\n\t\t")}\n" if dimension_column_group_names.size > 0
+        sql << "\nINTO OUTFILE '#{outfile}'\n"
+        if options[:fields]
+          sql << " FIELDS"
+          sql << " TERMINATED BY '#{options[:fields][:delimited_by]}'\n" if options[:fields][:delimited_by]
+          sql << " ENCLOSED BY '#{options[:fields][:enclosed_by]}'\n" if options[:fields][:enclosed_by]
+        end
+        sql << " IGNORE #{options[:ignore]} LINES" if options[:ignore]
+        sql << " (#{options[:columns].join(',')})" if options[:columns]
         
-        # puts sql + "\n--------------------------------------------------------------------------------\n"
+        puts sql + "\n--------------------------------------------------------------------------------\n"
         connection.execute(sql)
       
         # TODO: remove the appropriate records

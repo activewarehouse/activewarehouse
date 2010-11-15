@@ -56,4 +56,26 @@ class PipelinedRolapAggregateTest < Test::Unit::TestCase
     
   end
 
+  def test_query_super
+
+    filters = {
+      'date.calendar_year' => '2001'
+    }
+
+    cube = RollupSalesTransactionsCube.new
+    results = cube.query(
+      :column_dimension_name => :date,
+      :column_hierarchy_name => :cy,
+      :row_dimension_name => :product,
+      :row_hierarchy_name => :brand,
+      :cstage => 3, 
+      :rstage => 0,
+      :filters => filters,
+      :conditions => nil
+    )
+    
+    puts results.inspect
+    
+  end
+
 end
