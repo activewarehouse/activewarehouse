@@ -17,7 +17,7 @@ module ActiveWarehouse #:nodoc
     class PipelinedRolapAggregate < NoAggregate
       include RolapCommon
       
-      attr_accessor :new_records_only, :new_records_dimension, :new_records_record
+      attr_accessor :new_records_only, :new_records_dimension, :new_records_offset, :new_records_record
 
       def query(*args)
         options = parse_query_args(*args)
@@ -124,7 +124,8 @@ module ActiveWarehouse #:nodoc
         if(options[:new_records_only])
           # need to know the name of the dimension and field to use to find new only
           @new_records_only = true
-          @new_records_dimension = options[:new_records_only]
+          @new_records_dimension = options[:new_records_only][:dimension] || :date
+          @new_records_offset = options[:new_records_only][:buffer] || 1
         else
           @new_records_only = false
         end
@@ -157,7 +158,7 @@ module ActiveWarehouse #:nodoc
       # if not, just use the dim's id
       # so a product dimension with no hierarchy specified should by just product_id
       def create_aggregate_table(base_name, dimension_fields, current_levels, options)
-        # puts "create_aggregate_table start: #{current_levels.inspect}"
+        puts "create_aggregate_table start: #{current_levels.inspect}"
         
         table_name = aggregate_rollup_name(base_name, current_levels)
 
@@ -166,36 +167,48 @@ module ActiveWarehouse #:nodoc
           connection.drop_table(table_name)
         end
 
+        unique_index_columns = []
+        index_columns = []
+
         if !connection.tables.include?(table_name)
           
-          ActiveRecord::Base.transaction do
-            connection.create_table(table_name, :id => false) do |t|
-
-              dimension_fields.each_with_index do |pair, i|
-                dim = pair.first
-                levels = pair.last
-                max_level = current_levels[i]
-                # puts "create_aggregate_table: dim.name = #{dim.name}, max = #{max_level}, i = #{i}"
-                levels.each_with_index do |field, j|
-                  break if (j >= max_level)
-                  t.column(field.label, field.column_type)
-                end
+          connection.create_table(table_name, :id => false) do |t|
+            dimension_fields.each_with_index do |pair, i|
+              dim = pair.first
+              levels = pair.last
+              max_level = current_levels[i]
+              # puts "create_aggregate_table: dim.name = #{dim.name}, max = #{max_level}, i = #{i}"
+              levels.each_with_index do |field, j|
+                break if (j >= max_level)
+                unique_index_columns << field.label if (j == (max_level-1))
+                index_columns << field.label
+                t.column(field.label, field.column_type)
               end
+            end
 
-              aggregate_fields.each do |field|
-                options = {}
-                options[:limit] = field.type == :integer ? 8 : field.limit
-                options[:scale] = field.scale if field.scale
-                options[:precision] = field.precision if field.precision
-                t.column(field.label_for_table, field.column_type, options)
-              end
-              
+            aggregate_fields.each do |field|
+              options = {}
+              options[:limit] = field.type == :integer ? 8 : field.limit
+              options[:scale] = field.scale if field.scale
+              options[:precision] = field.precision if field.precision
+              t.column(field.label_for_table, field.column_type, options)
             end
             
-            # TODO: add index per dimension here (not for aggregates)
-
           end
-          # puts "create_aggregate_table end"
+
+          # add index per dimension here (not for aggregate fields)
+          index_columns.each{ |dimension_column|
+            puts "making index for: #{table_name} on: #{dimension_column}"
+            connection.add_index(table_name, dimension_column, :name => "by_#{dimension_column}")
+          }
+          
+          # Add a unique index for the 
+          unless unique_index_columns.empty?
+            puts "making unique index for: #{table_name} on: #{unique_index_columns.inspect}"
+            connection.add_index(table_name, unique_index_columns, :unique => true, :name => "by_unique_dims") 
+          end
+
+          puts "create_aggregate_table end"
           table_name
         end
 
@@ -203,8 +216,8 @@ module ActiveWarehouse #:nodoc
       
       def populate_aggregate_table(base_name, dimension_fields, current_levels, options={})
         target_rollup = aggregate_rollup_name(base_name, current_levels)
-        new_rec_dim_class = self.new_records_only ? Dimension.to_dimension(new_records_dimension) : nil
-
+        new_rec_dim_class = self.new_records_only ? fact_class.dimension_class(new_records_dimension) : nil
+        
         dimension_column_names = []
         dimension_column_group_names = []
         where_clause = ""
@@ -212,10 +225,15 @@ module ActiveWarehouse #:nodoc
         
         if (options[:use_fact])
           if (self.new_records_only && !self.new_records_record)
+
+            latest = nil
             new_records_field = dimension_fields[new_rec_dim_class].last
-            latest = connection.select_all("SELECT MAX(#{new_records_field}) AS latest FROM #{target_rollup}").first['latest']
+            find_latest_sql = "SELECT #{new_records_field} AS latest FROM #{target_rollup} ORDER BY #{new_records_field} LIMIT #{[(new_records_offset - 1), 0].max}, 1"
+            puts "find_latest_sql = #{find_latest_sql}"
+            latest = connection.select_one(find_latest_sql);
+            
             if latest
-              self.new_records_record = new_rec_dim_class.where(new_records_field.name=>latest).first
+              self.new_records_record = new_rec_dim_class.where(new_records_field.name=>latest[:latest]).first
             else
               self.new_records_record = nil
             end
@@ -297,11 +315,11 @@ module ActiveWarehouse #:nodoc
         # TODO: remove the appropriate records
         # if new rec only, and (0) fields for the new rec dim, truncate table before loading, as this is a full load.
         if delete_sql
-          # puts delete_sql + "\n--------------------------------------------------------------------------------\n"
+          puts delete_sql + "\n--------------------------------------------------------------------------------\n"
           connection.execute(delete_sql)
         end
         
-        connection.bulk_load(outfile, target_rollup)
+        connection.bulk_load(outfile, target_rollup, options.merge({:replace=>true}))
       end
 
       def parent_aggregate_rollup_name(base_name, dimension_fields, current_levels)
