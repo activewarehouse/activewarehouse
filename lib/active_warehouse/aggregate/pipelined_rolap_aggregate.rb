@@ -22,8 +22,24 @@ module ActiveWarehouse #:nodoc
       def query(*args)
         options = parse_query_args(*args)
 
+        # throw an error if there is no column and/or row
+        cstage     = options[:cstage] || 0
+        rstage     = options[:rstage] || 0
+        filters    = options[:filters] || {}
+        conditions = options[:conditions] || nil
+        joins      = options[:joins] || nil
+        
         column_dimension_name = options[:column_dimension_name] || options[:column]
-        row_dimension_name = options[:row_dimension_name] || options[:row]
+        column_dimension      = fact_class.dimension_class(column_dimension_name)
+        column_hierarchy      = dimension_hierarchy(column_dimension_name)        
+        current_column_name   = column_hierarchy[cstage]
+        full_column_name      = "#{column_dimension_name}_#{current_column_name}"
+
+        row_dimension_name    = options[:row_dimension_name] || options[:row]
+        row_dimension         = fact_class.dimension_class(row_dimension_name)
+        row_hierarchy         = dimension_hierarchy(row_dimension_name)
+        current_row_name      = row_hierarchy[rstage]
+        full_row_name         = "#{row_dimension_name}_#{current_row_name}"
 
         # if they try to query a hierarchy not in this cube, fallback on super (no_aggregate) query method
         ach = options[:column_hierarchy_name]
@@ -33,26 +49,10 @@ module ActiveWarehouse #:nodoc
         if ((ach && (ach != cch)) ||(arh && (arh != crh)))
           return super
         end
-        
-        # throw an error if there is no column and/or row
-        cstage = options[:cstage] || 0
-        rstage = options[:rstage] || 0
-        filters = options[:filters] || {}
-        conditions = options[:conditions] || nil
-        
-        column_dimension = fact_class.dimension_class(column_dimension_name)
-        column_hierarchy = dimension_hierarchy(column_dimension_name)        
-        row_dimension = fact_class.dimension_class(row_dimension_name)
-        row_hierarchy = dimension_hierarchy(row_dimension_name)
 
         dimension_levels = {}
         dimension_levels[column_dimension] = [(cstage + 1), column_hierarchy.count].min
         dimension_levels[row_dimension] = [(rstage + 1), row_hierarchy.count].min
-
-        current_column_name = column_hierarchy[cstage]
-        current_row_name = row_hierarchy[rstage]
-        full_column_name = "#{column_dimension_name}_#{current_column_name}"
-        full_row_name = "#{row_dimension_name}_#{current_row_name}"
 
         # build the where clause
         where_clause = []
@@ -234,20 +234,23 @@ module ActiveWarehouse #:nodoc
         
         if (options[:use_fact])
           if (self.new_records_only && !self.new_records_record)
-
             latest = nil
             new_records_field = dimension_fields[new_rec_dim_class].last
-            find_latest_sql = "SELECT #{new_records_field} AS latest FROM #{target_rollup} ORDER BY #{new_records_field} DESC LIMIT #{[(new_records_offset - 1), 0].max}, 1"
+            find_latest_sql = "SELECT #{new_records_field} AS latest FROM #{target_rollup} GROUP BY #{new_records_field} ORDER BY #{new_records_field} DESC LIMIT #{[(new_records_offset - 1), 0].max}, 1"
             puts "find_latest_sql = #{find_latest_sql}"
             latest = connection.select_one(find_latest_sql);
             
             if latest
-              self.new_records_record = new_rec_dim_class.where(new_records_field.name=>latest[:latest]).first
+              puts "found latest: #{latest.inspect}"
+              puts "find latest for dim: #{new_rec_dim_class.name}.where(#{new_records_field.name} => #{latest['latest']}).first"
+              self.new_records_record = new_rec_dim_class.where(new_records_field.name=>latest['latest']).first
             else
               self.new_records_record = nil
             end
           end
-
+          
+          puts "self.new_records_record = #{self.new_records_record.inspect}"
+          
           from_tables_and_joins = tables_and_joins
         else
           from_tables_and_joins = parent_aggregate_rollup_name(base_name, dimension_fields, current_levels)
@@ -260,6 +263,7 @@ module ActiveWarehouse #:nodoc
           if self.new_records_only && new_rec_dim_class == dim  && !options[:truncate]
 
             if new_records_record && max_level > 0
+              puts "add in a new records only condition..."
               new_rec_fields = []
               delete_fields = []
               levels.each_with_index do |field, j|
@@ -276,7 +280,12 @@ module ActiveWarehouse #:nodoc
 
               end
               where_clause = "WHERE\t\t(" + new_rec_fields.join(" AND\n\t\t") + ") "
-              delete_sql = "DELETE FROM\t#{target_rollup}\nWHERE\t\t(" + delete_fields.join(" AND\n\t\t") + ") "
+              
+              puts "create new records only condition #{where_clause}"
+              
+              # no need to delete now that we're using the replace bulk load option, 
+              # and have created unique keys on the aggregate to make that work
+              # delete_sql = "DELETE FROM\t#{target_rollup}\nWHERE\t\t(" + delete_fields.join(" AND\n\t\t") + ") "
             else
               delete_sql = "TRUNCATE TABLE #{target_rollup}"
             end
