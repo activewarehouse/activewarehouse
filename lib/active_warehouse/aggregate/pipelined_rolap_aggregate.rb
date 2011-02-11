@@ -187,11 +187,20 @@ module ActiveWarehouse #:nodoc
             end
 
             aggregate_fields.each do |field|
-              options = {}
-              options[:limit] = field.type == :integer ? 8 : field.limit
-              options[:scale] = field.scale if field.scale
-              options[:precision] = field.precision if field.precision
-              t.column(field.label_for_table, field.column_type, options)
+              af_opts = {}
+              af_opts[:limit] = field.type == :integer ? 8 : field.limit
+              af_opts[:scale] = field.scale if field.scale
+              af_opts[:precision] = field.precision if field.precision
+
+              # By default the aggregate field column type will be a count
+              aggregate_type = :integer
+
+              # But, if type is a decimal, and you do a sum or avg (not a count) then keep it a decimal
+              if [:float, :decimal].include?(field.type) && field.strategy_name != :count
+                aggregate_type = field.type
+              end
+              
+              t.column(field.label_for_table, field.column_type, af_opts)
             end
             
           end
@@ -248,7 +257,7 @@ module ActiveWarehouse #:nodoc
           dim, levels = pair
           max_level = current_levels[i]
 
-          if self.new_records_only && new_rec_dim_class == dim
+          if self.new_records_only && new_rec_dim_class == dim  && !options[:truncate]
 
             if new_records_record && max_level > 0
               new_rec_fields = []
