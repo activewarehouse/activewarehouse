@@ -237,7 +237,7 @@ module ActiveWarehouse #:nodoc
 
             latest = nil
             new_records_field = dimension_fields[new_rec_dim_class].last
-            find_latest_sql = "SELECT #{new_records_field} AS latest FROM #{target_rollup} ORDER BY #{new_records_field} LIMIT #{[(new_records_offset - 1), 0].max}, 1"
+            find_latest_sql = "SELECT #{new_records_field} AS latest FROM #{target_rollup} ORDER BY #{new_records_field} DESC LIMIT #{[(new_records_offset - 1), 0].max}, 1"
             puts "find_latest_sql = #{find_latest_sql}"
             latest = connection.select_one(find_latest_sql);
             
