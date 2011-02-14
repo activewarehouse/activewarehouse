@@ -19,6 +19,14 @@ module ActiveWarehouse #:nodoc
       
       attr_accessor :new_records_only, :new_records_dimension, :new_records_offset, :new_records_record
 
+      def sanitize(value)
+        result = value
+        if value.is_a?(Date) || value.is_a?(DateTime) || value.is_a?(Time)
+          result = value.to_s(:db)
+        end
+        connection.quote(result)
+      end
+
       def query(*args)
         options = parse_query_args(*args)
 
@@ -70,7 +78,12 @@ module ActiveWarehouse #:nodoc
           
           if dim_level
             if value
-              where_clause << "#{name} = #{connection.quote(value)}"
+              
+              if value.is_a?(Range)
+                where_clause << "(#{name} >= #{sanitize(value.begin)}) AND (#{name} <= #{sanitize(value.end)})"
+              else
+                where_clause << "#{name} = #{sanitize(value)}"
+              end
             else
               where_clause << "#{name} is null"
             end
@@ -97,10 +110,10 @@ module ActiveWarehouse #:nodoc
         sql << "#{full_row_name} AS #{current_row_name},\n"
         sql << (aggregate_fields.collect{|c| "#{c.label_for_table} as '#{c.label}'"}.join(",\n") + "\n")
         sql << "FROM #{query_table_name}\n"
-        sql << "WHERE (#{where_clause.join(" AND\n")})" if where_clause.length > 0
+        sql << "WHERE (#{where_clause.join(") AND\n(")})" if where_clause.length > 0
 
         if conditions
-          sql << " AND\n (#{conditions})"
+          sql << " AND\n (#{sanitize(conditions)})"
         end
         
         # execute the query and return the results as a CubeQueryResult object
@@ -188,19 +201,20 @@ module ActiveWarehouse #:nodoc
 
             aggregate_fields.each do |field|
               af_opts = {}
-              af_opts[:limit] = field.type == :integer ? 8 : field.limit
-              af_opts[:scale] = field.scale if field.scale
-              af_opts[:precision] = field.precision if field.precision
 
               # By default the aggregate field column type will be a count
               aggregate_type = :integer
+              af_opts[:limit] = 8
 
               # But, if type is a decimal, and you do a sum or avg (not a count) then keep it a decimal
               if [:float, :decimal].include?(field.type) && field.strategy_name != :count
-                aggregate_type = field.type
+                af_opts[:limit] = field.type == :integer ? 8 : field.limit
+                af_opts[:scale] = field.scale if field.scale
+                af_opts[:precision] = field.precision if field.precision
+                aggregate_type = field.column_type
               end
               
-              t.column(field.label_for_table, field.column_type, af_opts)
+              t.column(field.label_for_table, aggregate_type, af_opts)
             end
             
           end

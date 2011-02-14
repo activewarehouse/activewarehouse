@@ -44,12 +44,29 @@ module ActiveWarehouse #:nodoc:
     # For instance, add_data('Southeast', 2005, {:sales_sum => 40000, :sales_count => 40})
     # This method will typecast the values in aggregated_facts.
     def add_data(row_value, col_value, aggregated_facts)
-      #puts "Adding data for #{row_value}, #{col_value} [data=[#{aggregated_facts.join(',')}]]"
+      #puts "Adding data for #{row_value}, #{col_value} [data=[#{aggregated_facts.inspect}]]"
       @values_map[row_value.to_s] ||= {}
       @values_map[row_value.to_s][col_value.to_s] = typecast_facts(aggregated_facts)
     end
     
+    # def to_json
+    #   json_data = {}
+    #   @values_map.keys.each do |row_value|
+    #     puts "found row: #{row_value}"
+    #     json_data[row_value] = {}
+    #     row = @values_map[row_value]
+    #     row.keys.each do |column_value|
+    #       puts "found value: #{column_value}"
+    #       # json_data[row_value][column_value] =  {"test" => 1}
+    #       aggregate_values = row[column_value]
+    #       json_data[row_value][column_value] =  Hash[aggregate_values.map{|k, v| [aggregate_fields_hash[k].name, v] }]
+    #     end
+    #   end
+    #   json_data.to_json
+    # end
+    
     private
+    
     def empty_hash_for_missing_row_or_column
       empty = {}
       aggregate_fields_hash.keys.each {|k| empty[k] = 0}
@@ -62,8 +79,23 @@ module ActiveWarehouse #:nodoc:
         if field.nil?
           raise ArgumentError, "'#{k}' is an unknown aggregate field in this query result"
         end
-        raw_facts[k] = field.type_cast(v)
+        raw_facts[k] = type_cast_aggregate_value(v, field)
       end
     end
+    
+    def type_cast_aggregate_value(value, field)
+      if value.is_a?(String) || value.nil?
+        operation = field.strategy_name.to_s
+        case operation
+          when 'count'  then value.to_i                     # count must be an integer
+          when 'sum'    then field.type_cast(value || '0')  # sum could be a decimal or integer
+          when 'avg'    then value.try(:to_d)               # avg should be a decimal, as it involves division
+          else field.type_cast(value)                       # max and min and others keep field type
+        end
+      else
+        value
+      end
+    end
+    
   end
 end

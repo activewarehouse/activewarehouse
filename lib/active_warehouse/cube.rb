@@ -196,7 +196,11 @@ module ActiveWarehouse
       def aggregate_options
         @aggregate_options || {}
       end
-            
+
+      def query(*args)
+        self.aggregate.query(*args)
+      end
+
     end
     
     public
