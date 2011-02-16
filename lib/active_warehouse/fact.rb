@@ -152,6 +152,9 @@ module ActiveWarehouse #:nodoc
         aggregate_field = AggregateField.new(self, columns_hash[field.to_s],
                                              options[:type], options)
         aggregate_fields << aggregate_field
+      rescue Object=>err
+        raise if err.is_a?(ArgumentError)
+        logger.error "Error on define_aggregate ignored: #{err.message}"
       end
       alias :aggregate :define_aggregate
       
