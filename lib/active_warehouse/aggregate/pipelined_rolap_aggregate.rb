@@ -106,11 +106,12 @@ module ActiveWarehouse #:nodoc
         # build the SQL query
         sql = ''
         sql << "SELECT\n"
-        sql << "#{full_column_name} AS #{current_column_name},\n"
-        sql << "#{full_row_name} AS #{current_row_name},\n"
-        sql << (aggregate_fields.collect{|c| "#{c.label_for_table} as '#{c.label}'"}.join(",\n") + "\n")
+        sql << "#{full_column_name} AS '#{current_column_name}',\n"
+        sql << "#{full_row_name} AS '#{current_row_name}',\n"
+        sql << (aggregate_fields.collect{|c| "#{c.strategy_name == :avg ? :avg : :sum}(#{c.label_for_table}) AS '#{c.label}'"}.join(",\n") + "\n")
         sql << "FROM #{query_table_name}\n"
-        sql << "WHERE (#{where_clause.join(") AND\n(")})" if where_clause.length > 0
+        sql << "WHERE (#{where_clause.join(") AND\n(")})\n" if where_clause.length > 0
+        sql << "GROUP BY #{full_column_name}, #{full_row_name}"
 
         if conditions
           sql << " AND\n (#{sanitize(conditions)})"
@@ -193,7 +194,8 @@ module ActiveWarehouse #:nodoc
               # puts "create_aggregate_table: dim.name = #{dim.name}, max = #{max_level}, i = #{i}"
               levels.each_with_index do |field, j|
                 break if (j >= max_level)
-                unique_index_columns << field.label if (j == (max_level-1))
+                # unique_index_columns << field.label if (j == (max_level-1))
+                unique_index_columns << field.label
                 index_columns << field.label
                 t.column(field.label, field.column_type)
               end
@@ -243,6 +245,10 @@ module ActiveWarehouse #:nodoc
         
         dimension_column_names = []
         dimension_column_group_names = []
+        
+        load_dimension_column_names = []
+        load_aggregate_column_names = []
+        
         where_clause = ""
         delete_sql = nil
         
@@ -308,9 +314,11 @@ module ActiveWarehouse #:nodoc
           levels.each_with_index do |field, j|
             break if (j >= max_level)
             if options[:use_fact]
+              load_dimension_column_names << "#{field.table_alias}_#{field.name}"
               dimension_column_names << "#{field.table_alias}.#{field.name} as #{field.table_alias}_#{field.name}"
               dimension_column_group_names << "#{field.table_alias}.#{field.name}"
             else
+              load_dimension_column_names << field.label
               dimension_column_names << field.label
               dimension_column_group_names << field.label
             end
@@ -326,6 +334,12 @@ module ActiveWarehouse #:nodoc
           end
         end
 
+        load_aggregate_column_names = aggregate_fields.collect{|c| c.label_for_table}
+
+        options[:fields] = {} unless options[:fields]
+        options[:fields][:delimited_by] = ','
+        options[:fields][:enclosed_by] = '"'
+
         outfile = aggregate_temp_file(target_rollup)
 
         sql =  "SELECT\t\t#{(dimension_column_names + aggregate_column_names).join(",\n\t\t")}\n"
@@ -333,25 +347,29 @@ module ActiveWarehouse #:nodoc
         sql << where_clause + "\n"
         sql << "GROUP BY\t#{dimension_column_group_names.join(",\n\t\t")}\n" if dimension_column_group_names.size > 0
         sql << "\nINTO OUTFILE '#{outfile}'\n"
-        if options[:fields]
-          sql << " FIELDS"
-          sql << " TERMINATED BY '#{options[:fields][:delimited_by]}'\n" if options[:fields][:delimited_by]
-          sql << " ENCLOSED BY '#{options[:fields][:enclosed_by]}'\n" if options[:fields][:enclosed_by]
-        end
-        sql << " IGNORE #{options[:ignore]} LINES" if options[:ignore]
-        sql << " (#{options[:columns].join(',')})" if options[:columns]
+        sql << "FIELDS TERMINATED BY '#{options[:fields][:delimited_by]}'\n"
+        sql << "         ENCLOSED BY '#{options[:fields][:enclosed_by]}'\n"
+
         
         puts sql + "\n--------------------------------------------------------------------------------\n"
-        connection.execute(sql)
-      
-        # TODO: remove the appropriate records
-        # if new rec only, and (0) fields for the new rec dim, truncate table before loading, as this is a full load.
-        if delete_sql
-          puts delete_sql + "\n--------------------------------------------------------------------------------\n"
-          connection.execute(delete_sql)
+
+        connection.transaction do
+          connection.execute(sql)
         end
-        
-        connection.bulk_load(outfile, target_rollup, options.merge({:replace=>true}))
+
+        connection.transaction do
+          # TODO: remove the appropriate records
+          # if new rec only, and (0) fields for the new rec dim, truncate table before loading, as this is a full load.
+          if delete_sql
+            puts delete_sql + "\n--------------------------------------------------------------------------------\n"
+            connection.execute(delete_sql)
+          end
+          
+          # connection.bulk_load(outfile, target_rollup, options.merge({:replace=>true}))
+          options[:columns] = load_dimension_column_names + load_aggregate_column_names
+          puts options.inspect + "\n--------------------------------------------------------------------------------\n"
+          connection.bulk_load(outfile, target_rollup, options)
+        end
       end
 
       def parent_aggregate_rollup_name(base_name, dimension_fields, current_levels)
