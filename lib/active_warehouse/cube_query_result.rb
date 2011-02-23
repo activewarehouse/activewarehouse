@@ -24,6 +24,10 @@ module ActiveWarehouse #:nodoc:
         yield key, value
       end
     end
+    
+    def row(row_value)
+      @values_map[row_value.to_s] || {}
+    end
   
     def value(row_value, col_value, field_label)
       #puts "getting value #{row_value},#{col_value},#{field_label}"

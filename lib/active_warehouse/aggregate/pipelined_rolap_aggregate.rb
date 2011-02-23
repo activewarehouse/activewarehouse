@@ -36,18 +36,32 @@ module ActiveWarehouse #:nodoc
         filters    = options[:filters] || {}
         conditions = options[:conditions] || nil
         joins      = options[:joins] || nil
+        limit      = options[:limit] || nil
+        order      = options[:order] || nil
         
         column_dimension_name = options[:column_dimension_name] || options[:column]
         column_dimension      = fact_class.dimension_class(column_dimension_name)
-        column_hierarchy      = dimension_hierarchy(column_dimension_name)        
-        current_column_name   = column_hierarchy[cstage]
-        full_column_name      = "#{column_dimension_name}_#{current_column_name}"
+        column_hierarchy      = dimension_hierarchy(column_dimension_name)
+        
+        if cstage == 'all'
+          current_column_name =  "#{column_dimension_name}_all"
+          full_column_name    =  "'all'"
+        else
+          current_column_name   = column_hierarchy[cstage]
+          full_column_name      = "#{column_dimension_name}_#{current_column_name}"
+        end
 
         row_dimension_name    = options[:row_dimension_name] || options[:row]
         row_dimension         = fact_class.dimension_class(row_dimension_name)
         row_hierarchy         = dimension_hierarchy(row_dimension_name)
-        current_row_name      = row_hierarchy[rstage]
-        full_row_name         = "#{row_dimension_name}_#{current_row_name}"
+        
+        if rstage == 'all'
+          current_row_name =  "#{row_dimension_name}_all"
+          full_row_name    =  "'all'"
+        else
+          current_row_name   = row_hierarchy[rstage]
+          full_row_name      = "#{row_dimension_name}_#{current_row_name}"
+        end
 
         # if they try to query a hierarchy not in this cube, fallback on super (no_aggregate) query method
         ach = options[:column_hierarchy_name]
@@ -59,13 +73,13 @@ module ActiveWarehouse #:nodoc
         end
 
         dimension_levels = {}
-        dimension_levels[column_dimension] = [(cstage + 1), column_hierarchy.count].min
-        dimension_levels[row_dimension] = [(rstage + 1), row_hierarchy.count].min
+        dimension_levels[column_dimension] = (cstage.to_s == 'all') ? 0 : [(cstage + 1), column_hierarchy.count].min
+        dimension_levels[row_dimension] =  (rstage.to_s == 'all') ? 0 : [(rstage + 1), row_hierarchy.count].min
 
         # build the where clause
         where_clause = []
-        where_clause << "#{full_column_name} is not null"
-        where_clause << "#{full_row_name} is not null"
+        where_clause << "#{full_column_name} is not null" unless cstage == 'all'
+        where_clause << "#{full_row_name} is not null" unless cstage == 'all'
 
         # process all filters
         filters.each do |key, value|
@@ -110,12 +124,11 @@ module ActiveWarehouse #:nodoc
         sql << "#{full_row_name} AS '#{current_row_name}',\n"
         sql << (aggregate_fields.collect{|c| "#{c.strategy_name == :avg ? :avg : :sum}(#{c.label_for_table}) AS '#{c.label}'"}.join(",\n") + "\n")
         sql << "FROM #{query_table_name}\n"
-        sql << "WHERE (#{where_clause.join(") AND\n(")})\n" if where_clause.length > 0
-        sql << "GROUP BY #{full_column_name}, #{full_row_name}"
-
-        if conditions
-          sql << " AND\n (#{sanitize(conditions)})"
-        end
+        sql << "WHERE (#{where_clause.join(") AND\n(")})\n"
+        sql << "AND (#{sanitize(conditions)})\n" if conditions
+        sql << "GROUP BY #{full_column_name}, #{full_row_name}\n"
+        sql << "ORDER BY #{order}\n" if order
+        sql << "LIMIT #{limit}\n" if limit
         
         # execute the query and return the results as a CubeQueryResult object
         result = ActiveWarehouse::CubeQueryResult.new(aggregate_fields)
