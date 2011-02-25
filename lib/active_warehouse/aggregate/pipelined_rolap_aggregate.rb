@@ -78,8 +78,10 @@ module ActiveWarehouse #:nodoc
 
         # build the where clause
         where_clause = []
-        where_clause << "#{full_column_name} is not null" unless cstage == 'all'
-        where_clause << "#{full_row_name} is not null" unless cstage == 'all'
+        
+        #  I don't think I want these
+        # where_clause << "#{full_column_name} is not null" unless cstage == 'all'
+        # where_clause << "#{full_row_name} is not null" unless cstage == 'all'
 
         # process all filters
         filters.each do |key, value|
@@ -95,11 +97,15 @@ module ActiveWarehouse #:nodoc
               
               if value.is_a?(Range)
                 where_clause << "(#{name} >= #{sanitize(value.begin)}) AND (#{name} <= #{sanitize(value.end)})"
+              elsif value == :not_null
+                where_clause << "#{name} IS NOT NULL"
+              elsif (value.nil? || value == :null)
+                where_clause << "#{name} IS NULL"
               else
                 where_clause << "#{name} = #{sanitize(value)}"
               end
             else
-              where_clause << "#{name} is null"
+              where_clause << "#{name} IS NOT NULL"
             end
             
             unless [column_dimension_name, row_dimension_name].include?(dimension_name)
@@ -185,7 +191,7 @@ module ActiveWarehouse #:nodoc
       # if not, just use the dim's id
       # so a product dimension with no hierarchy specified should by just product_id
       def create_aggregate_table(base_name, dimension_fields, current_levels, options)
-        puts "create_aggregate_table start: #{current_levels.inspect}"
+        # puts "create_aggregate_table start: #{current_levels.inspect}"
         
         table_name = aggregate_rollup_name(base_name, current_levels)
 
@@ -270,12 +276,12 @@ module ActiveWarehouse #:nodoc
             latest = nil
             new_records_field = dimension_fields[new_rec_dim_class].last
             find_latest_sql = "SELECT #{new_records_field} AS latest FROM #{target_rollup} GROUP BY #{new_records_field} ORDER BY #{new_records_field} DESC LIMIT #{[(new_records_offset - 1), 0].max}, 1"
-            puts "find_latest_sql = #{find_latest_sql}"
+            # puts "find_latest_sql = #{find_latest_sql}"
             latest = connection.select_one(find_latest_sql);
             
             if latest
-              puts "found latest: #{latest.inspect}"
-              puts "find latest for dim: #{new_rec_dim_class.name}.where(#{new_records_field.name} => #{latest['latest']}).first"
+              # puts "found latest: #{latest.inspect}"
+              # puts "find latest for dim: #{new_rec_dim_class.name}.where(#{new_records_field.name} => #{latest['latest']}).first"
               self.new_records_record = new_rec_dim_class.where(new_records_field.name=>latest['latest']).first
             else
               self.new_records_record = nil
@@ -296,7 +302,7 @@ module ActiveWarehouse #:nodoc
           if self.new_records_only && new_rec_dim_class == dim  && !options[:truncate]
 
             if new_records_record && max_level > 0
-              puts "add in a new records only condition..."
+              # puts "add in a new records only condition..."
               new_rec_fields = []
               delete_fields = []
               levels.each_with_index do |field, j|
@@ -430,6 +436,7 @@ module ActiveWarehouse #:nodoc
       end
       
       def aggregate_dimension_fields
+        # puts "aggregate_dimension_fields"
         dim_cols = OrderedHash.new
         
         cube_class.dimensions_hierarchies.each do |dimension_name, hierarchy_name|
