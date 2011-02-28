@@ -28,6 +28,13 @@ module ActiveWarehouse #:nodoc:
       @name = name
       @type = type
       @field_options = field_options
+
+      # standard options
+      @limit = field_options[:limit]
+      @scale = field_options[:scale]
+      @precision = field_options[:precision]
+
+      # aw specific options
       @label = field_options[:label]
       @table_alias = field_options[:table_alias]
     end

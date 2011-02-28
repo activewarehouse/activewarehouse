@@ -147,7 +147,6 @@ module ActiveWarehouse #:nodoc
         result
       end
 
-
       # Build and populate the data store
       def populate(options={})
         # puts "PipelinedRolapAggregate::populate #{options.inspect}"
@@ -194,6 +193,7 @@ module ActiveWarehouse #:nodoc
         # puts "create_aggregate_table start: #{current_levels.inspect}"
         
         table_name = aggregate_rollup_name(base_name, current_levels)
+        table_options = options[:aggregate_table_options] || {}
 
         # # truncate if configured to, otherwise, just pile it on.
         if (options[:truncate] && connection.tables.include?(table_name))
@@ -205,7 +205,9 @@ module ActiveWarehouse #:nodoc
 
         if !connection.tables.include?(table_name)
           
-          connection.create_table(table_name, :id => false) do |t|
+          aggregate_table_options = options[:aggregate_table_options] || {}
+          aggregate_table_options.merge({:id => false})
+          connection.create_table(table_name, aggregate_table_options) do |t|
             dimension_fields.each_with_index do |pair, i|
               dim = pair.first
               levels = pair.last
@@ -213,10 +215,20 @@ module ActiveWarehouse #:nodoc
               # puts "create_aggregate_table: dim.name = #{dim.name}, max = #{max_level}, i = #{i}"
               levels.each_with_index do |field, j|
                 break if (j >= max_level)
+                column_options = {:null=>true}
                 # unique_index_columns << field.label if (j == (max_level-1))
+
+                # if it is a string or text column, then include the limit with the options
+                if [:string, :text].include?(field.column_type)
+                  column_options[:limit] = field.limit
+                  column_options[:default] = nil
+                elsif [:primary_key, :integer, :float, :decimal, :boolean].include?(field.column_type)
+                  column_options[:default] = 0
+                end
+                
                 unique_index_columns << field.label
                 index_columns << field.label
-                t.column(field.label, field.column_type)
+                t.column(field.label, field.column_type, column_options)
               end
             end
 
@@ -449,7 +461,12 @@ module ActiveWarehouse #:nodoc
             dim_cols[dimension_class] << Field.new( dimension_class,
                                                     column.name,
                                                     column.type,
-                                                    :table_alias=>dimension_name)
+                                                    { 
+                                                      :limit       => column.limit,
+                                                      :scale       => column.scale,
+                                                      :precision   => column.precision,
+                                                      :table_alias => dimension_name 
+                                                    })
           end
         end
         dim_cols
