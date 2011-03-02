@@ -1,4 +1,6 @@
-Dir[File.dirname(__FILE__) + "/generator/*.rb"].each { |file| require(file) }
+require File.dirname(__FILE__) + "/generator/generator"
+require File.dirname(__FILE__) + "/generator/name_generator"
+require File.dirname(__FILE__) + "/generator/paragraph_generator"
 
 module ActiveWarehouse #:nodoc:
   module Builder #:nodoc:
