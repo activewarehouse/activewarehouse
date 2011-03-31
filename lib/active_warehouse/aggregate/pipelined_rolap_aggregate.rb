@@ -204,9 +204,7 @@ module ActiveWarehouse #:nodoc
         index_columns = []
 
         if !connection.tables.include?(table_name)
-          
-          aggregate_table_options = options[:aggregate_table_options] || {}
-          aggregate_table_options.merge({:id => false})
+          aggregate_table_options = (options[:aggregate_table_options] || {}).merge({:id => false})
           connection.create_table(table_name, aggregate_table_options) do |t|
             dimension_fields.each_with_index do |pair, i|
               dim = pair.first
