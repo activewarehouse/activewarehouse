@@ -213,13 +213,13 @@ module ActiveWarehouse #:nodoc
               # puts "create_aggregate_table: dim.name = #{dim.name}, max = #{max_level}, i = #{i}"
               levels.each_with_index do |field, j|
                 break if (j >= max_level)
-                column_options = {:null=>true}
+                column_options = {:null=>false}
                 # unique_index_columns << field.label if (j == (max_level-1))
 
                 # if it is a string or text column, then include the limit with the options
                 if [:string, :text].include?(field.column_type)
                   column_options[:limit] = field.limit
-                  column_options[:default] = nil
+                  column_options[:default] = ''
                 elsif [:primary_key, :integer, :float, :decimal, :boolean].include?(field.column_type)
                   column_options[:default] = 0
                 end
@@ -318,7 +318,7 @@ module ActiveWarehouse #:nodoc
               levels.each_with_index do |field, j|
                 break if (j >= max_level)
                 new_rec_value = new_records_record.send(field.name)
-
+                
                 if options[:use_fact]
                   new_rec_fields << "(#{field.table_alias}.#{field.name} >= '#{new_rec_value}')"
                 else
@@ -342,13 +342,19 @@ module ActiveWarehouse #:nodoc
 
           levels.each_with_index do |field, j|
             break if (j >= max_level)
+            
+            field_default = "''"
+            if [:primary_key, :integer, :float, :decimal, :boolean].include?(field.column_type)
+              field_default = 0
+            end
+            
             if options[:use_fact]
+              dimension_column_names << "coalesce(#{field.table_alias}.#{field.name}, #{field_default}) as #{field.table_alias}_#{field.name}"
               load_dimension_column_names << "#{field.table_alias}_#{field.name}"
-              dimension_column_names << "#{field.table_alias}.#{field.name} as #{field.table_alias}_#{field.name}"
               dimension_column_group_names << "#{field.table_alias}.#{field.name}"
             else
-              load_dimension_column_names << field.label
               dimension_column_names << field.label
+              load_dimension_column_names << field.label
               dimension_column_group_names << field.label
             end
           end
