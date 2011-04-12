@@ -86,15 +86,23 @@ module ActiveWarehouse #:nodoc:
         raw_facts[k] = type_cast_aggregate_value(v, field)
       end
     end
-    
+
     def type_cast_aggregate_value(value, field)
       if value.is_a?(String) || value.nil?
         operation = field.strategy_name.to_s
         case operation
-          when 'count'  then value.to_i                     # count must be an integer
-          when 'sum'    then field.type_cast(value || '0')  # sum could be a decimal or integer
-          when 'avg'    then value.try(:to_d)               # avg should be a decimal, as it involves division
-          else field.type_cast(value)                       # max and min and others keep field type
+
+          # count must be an integer
+          when 'count'  then value.to_i
+
+          # sum could be a decimal or integer
+          when 'sum'    then ([:decimal, :float].include?(field.type) ? (value.try(:to_d) || 0) : value.to_i)
+
+          # avg should be a decimal, as it involves division
+          when 'avg'    then (value.try(:to_d) || 0)
+
+          # max and min and others keep field type
+          else field.type_cast(value)
         end
       else
         value
