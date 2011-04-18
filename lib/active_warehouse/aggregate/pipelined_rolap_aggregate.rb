@@ -334,7 +334,10 @@ module ActiveWarehouse #:nodoc
               
               # no need to delete now that we're using the replace bulk load option, 
               # and have created unique keys on the aggregate to make that work
-              # delete_sql = "DELETE FROM\t#{target_rollup}\nWHERE\t\t(" + delete_fields.join(" AND\n\t\t") + ") "
+              unless options[:replace]
+                delete_sql = "DELETE FROM\t#{target_rollup}\nWHERE\t\t(" + delete_fields.join(" AND\n\t\t") + ") "
+              end
+              
             else
               delete_sql = "TRUNCATE TABLE #{target_rollup}"
             end
