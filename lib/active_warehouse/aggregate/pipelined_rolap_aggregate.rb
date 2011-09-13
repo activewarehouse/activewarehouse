@@ -43,7 +43,7 @@ module ActiveWarehouse #:nodoc
         column_dimension      = fact_class.dimension_class(column_dimension_name)
         column_hierarchy      = dimension_hierarchy(column_dimension_name)
         
-        if cstage == 'all'
+        if cstage.to_s == 'all'
           current_column_name =  "#{column_dimension_name}_all"
           full_column_name    =  "'all'"
         else
@@ -55,7 +55,7 @@ module ActiveWarehouse #:nodoc
         row_dimension         = fact_class.dimension_class(row_dimension_name)
         row_hierarchy         = dimension_hierarchy(row_dimension_name)
         
-        if rstage == 'all'
+        if rstage.to_s == 'all'
           current_row_name =  "#{row_dimension_name}_all"
           full_row_name    =  "'all'"
         else
@@ -80,8 +80,8 @@ module ActiveWarehouse #:nodoc
         where_clause = []
         
         #  I don't think I want these
-        # where_clause << "#{full_column_name} is not null" unless cstage == 'all'
-        # where_clause << "#{full_row_name} is not null" unless cstage == 'all'
+        where_clause << "#{full_column_name} is not null" unless cstage == 'all'
+        where_clause << "#{full_row_name} is not null" unless rstage == 'all'
 
         # process all filters
         filters.each do |key, value|
@@ -115,6 +115,14 @@ module ActiveWarehouse #:nodoc
 
           end
           
+        end
+        
+        # default order by row, then column
+        unless order
+          order_fields = []
+          order_fields << "#{full_row_name} DESC" unless rstage == 'all'
+          order_fields << "#{full_column_name} DESC" unless cstage == 'all'
+          order = order_fields.join(', ')
         end
 
         aggregate_levels = aggregate_dimension_fields.collect{ |dim, levels| 
