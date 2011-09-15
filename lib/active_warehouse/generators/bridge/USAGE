@@ -1,1 +1,1 @@
-./script/generate bridge NAME
+rails generate active_warehouse:bridge BRIDGE_NAME

@@ -1,4 +1,4 @@
-class <%= migration_name %> < ActiveRecord::Migration
+class <%= @migration_name %> < ActiveRecord::Migration
   def self.up
     fields = {
       # the following are the required bridge table columns for

@@ -1,1 +1,1 @@
-./script/generate dimension NAME
+rails generate dimension NAME
