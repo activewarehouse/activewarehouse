@@ -5,6 +5,8 @@ module ActiveWarehouse
       load "active_warehouse/tasks/active_warehouse.rake"
     end
     
+    puts Dir[File.expand_path('*.rb', File.dirname(__FILE__))]
+    
     generators do
       Dir[File.expand_path('*.rb', File.dirname(__FILE__))].each do |file|
         require file
