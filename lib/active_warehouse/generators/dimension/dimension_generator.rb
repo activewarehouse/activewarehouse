@@ -1,4 +1,4 @@
-class DimensionGenerator < Rails::Generator::NamedBase
+class DimensionGenerator < Rails::Generators::NamedBase
   attr_accessor :file_name
   
   default_options :skip_migration => false

@@ -1,4 +1,4 @@
-class BridgeGenerator < Rails::Generator::NamedBase
+class BridgeGenerator < Rails::Generators::NamedBase
   attr_accessor :file_name
   
   default_options :skip_migration => false

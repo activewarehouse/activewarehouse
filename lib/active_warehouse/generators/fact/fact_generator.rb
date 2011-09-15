@@ -1,4 +1,4 @@
-class FactGenerator < Rails::Generator::NamedBase
+class FactGenerator < Rails::Generators::NamedBase
   attr_accessor :file_name
   
   default_options :skip_migration => false

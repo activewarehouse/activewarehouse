@@ -1,4 +1,4 @@
-class DimensionViewGenerator < Rails::Generator::NamedBase
+class DimensionViewGenerator < Rails::Generators::NamedBase
   attr_accessor :file_name, :view_name, :query_target_name, :query_target_table_name, :view_query, :view_attributes
   
   default_options :skip_migration => false

@@ -1,4 +1,4 @@
-class CubeGenerator < Rails::Generator::NamedBase
+class CubeGenerator < Rails::Generators::NamedBase
   attr_accessor :file_name
   
   def initialize(runtime_args, runtime_options = {})
