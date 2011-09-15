@@ -15,10 +15,10 @@ module ActiveWarehouse
         rescue # save them to try again
           dependent_files << file
         end
-        dependent_files.each do |file|
+      end
+      # second pass
+      dependent_files.each do |file|
           require file
-        end
-        
       end
     end
   end
