@@ -1,7 +1,7 @@
 class BridgeGenerator < Rails::Generators::NamedBase
   attr_accessor :file_name
   
-  default_options :skip_migration => false
+  #default_options :skip_migration => false
   
   def initialize(runtime_args, runtime_options = {})
     super

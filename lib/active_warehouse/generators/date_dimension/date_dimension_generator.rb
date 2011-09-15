@@ -2,7 +2,7 @@ class DateDimensionGenerator < DimensionGenerator
   attr_accessor :file_name
   attr_accessor :include_fiscal_year
   
-  default_options :skip_migration => false
+  #default_options :skip_migration => false
   
   def initialize(runtime_args, runtime_options = {})
     super
