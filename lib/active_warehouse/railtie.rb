@@ -6,7 +6,7 @@ module ActiveWarehouse
     end
     
     generators do
-      Dir[File.expand_path('generators/**/*.rb', File.dirname(__FILE__))].each do |file|
+      Dir[File.expand_path('generators/*/*.rb', File.dirname(__FILE__))].each do |file|
         require file
       end
     end
