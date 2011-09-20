@@ -1,1 +1,1 @@
-rails generate active_warehouse:dimension DIMENSION_NAME
+rails generate active_warehouse:dimension_view OrderDate Date
