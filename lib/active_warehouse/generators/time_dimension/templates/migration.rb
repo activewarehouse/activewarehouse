@@ -1,4 +1,4 @@
-class <%= class_name.pluralize.delete('::') %> < ActiveRecord::Migration
+class Create<%= class_name.pluralize.delete('::') %> < ActiveRecord::Migration
   def self.up
     create_table :<%= table_name %> do |t|
       t.column :hour_of_day, :integer, :null => false

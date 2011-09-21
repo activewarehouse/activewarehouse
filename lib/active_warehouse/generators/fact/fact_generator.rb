@@ -1,10 +1,12 @@
 module ActiveWarehouse
   class FactGenerator < Rails::Generators::NamedBase
     include Rails::Generators::Migration
-  
+    attr_accessor :model_attributes
+    
     self.source_root(File.expand_path("../templates", __FILE__))
 
     argument :name, :type => :string, :required => true, :banner => 'FactName'
+    argument :args_for_c_m, :type => :array, :default => [], :banner => 'fact:attributes'
     class_option :skip_migration, :desc => 'Don\'t generate migration file for fact.', :type => :boolean
     check_class_collision
     check_class_collision :suffix => "Test"
@@ -16,6 +18,15 @@ module ActiveWarehouse
         @table_name = "#{@name}_facts"
         @class_name = "#{@name.camelize}Fact"
         @file_name = "#{@class_name.tableize.singularize}"
+        
+        @model_attributes = []
+
+        args_for_c_m.each do |arg|
+          if arg.include?(':')
+            @model_attributes << Rails::Generators::GeneratedAttribute.new(*arg.split(':'))
+          end
+        end
+        
     end
     
     # Implement the required interface for Rails::Generators::Migration.
