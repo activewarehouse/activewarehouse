@@ -1,4 +1,5 @@
 # Helper module for rendering reports.
+require 'builder'
 module ReportHelper
   # include ActiveWarehouse::Report::YuiAdapter
   

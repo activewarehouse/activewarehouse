@@ -55,9 +55,6 @@ module ActiveWarehouse
       template 'fixture.yml', "test/fixtures/#{table_name}.yml"
     end
   
-  
-  
-  
     def banner
       "Usage: #{$0} #{spec.name} #{spec.name.camelize}Name SelectTarget [options]"
     end
