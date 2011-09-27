@@ -119,6 +119,17 @@ module ActiveWarehouse #:nodoc
         return class_for_name(dimension)
       end
       
+      
+      # Allows to add SQL conditions when the available values for this dimension
+      # Ex: WHERE color IN('blue', 'red')
+      def define_dimension_filter(filter)
+        @dimension_filter = filter
+      end
+      
+      def dimension_filter
+        @dimension_filter ||= ""
+      end
+      
       # Returns a hash of all of the values at the specified hierarchy level 
       # mapped to the count at that level. For example, given a date dimension
       # with years from 2002 to 2004 and a hierarchy defined with:
@@ -196,7 +207,18 @@ module ActiveWarehouse #:nodoc
         level = connection.quote_column_name(level.to_s)
         order = level_orders[level] || self.order || level
         
-        options = {:select => "distinct #{order.to_s == level.to_s ? '' : order.to_s+','} #{level}", :order => order}
+        # Create the conditions array. Will work with 1.1.6.
+        conditions_parts = []
+        conditions_values = []
+        
+        dimension_filter.each do |key, value|
+          conditions_parts  <<  "#{key} = ?"
+          conditions_values <<  value
+        end
+        
+        conditions = [conditions_parts.join(' AND ')] + conditions_values unless conditions_parts.empty?
+        
+        options = {:select => "distinct #{order.to_s == level.to_s ? '' : order.to_s+','} #{level}", :order => order, :conditions => conditions}
         values = []
         find(:all, options).each do |dim|
           value = dim.send(level_method)
@@ -229,6 +251,12 @@ module ActiveWarehouse #:nodoc
           conditions_parts << "#{levels[index]} = ?"
           conditions_values << value
         end
+        
+        dimension_filter.each do |key, value|
+          conditions_parts  <<  "#{key} = ?"
+          conditions_values <<  value
+        end
+        
         conditions = [conditions_parts.join(' AND ')] + conditions_values unless conditions_parts.empty?
         
         child_level_method = child_level.to_sym
@@ -240,7 +268,7 @@ module ActiveWarehouse #:nodoc
         options = {:select => select_sql, :order => order}
 
         options[:conditions] = conditions unless conditions.nil?
-
+        
         find(:all, options).map do |dim|
           dim.send(child_level_method)
         end.uniq
