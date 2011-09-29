@@ -116,7 +116,7 @@ module ActiveWarehouse #:nodoc:
         end
         
         row_dimension_columns =  current_row_name.map do |row_name|
-          "#{row_dimension_name}.#{row_name} as #{row_dimension_name}_1_#{row_name}"
+          "#{row_dimension_name}.#{row_name} as #{row_dimension_name}_2_#{row_name}"
         end
         
         sql = ''
@@ -207,13 +207,18 @@ module ActiveWarehouse #:nodoc:
           sql += %Q(\nORDER BY\n  #{order_by.join(",\n")})
         end
         
+        
         if options[:return] == :sql
           sql
         else
           result = ActiveWarehouse::CubeQueryResult.new(
             cube_class.aggregate_fields(used_dimensions)
           )
-        
+          
+          
+          
+          
+          
           cube_class.connection.select_all(sql).each do |row|
             result.add_data(row.delete("#{row_dimension_name}_2_#{current_row_name}"),
                             row.delete("#{column_dimension_name}_1_#{current_column_name}"),
