@@ -259,7 +259,6 @@ module ActiveWarehouse #:nodoc
         
         conditions = [conditions_parts.join(' AND ')] + conditions_values unless conditions_parts.empty?
         
-        debugger
         child_level = [child_level] unless child_level.is_a? Array
         
         child_level_methods = child_level.map{|e|e.to_sym}
