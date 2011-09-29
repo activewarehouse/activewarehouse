@@ -242,7 +242,7 @@ module ActiveWarehouse #:nodoc
           raise ArgumentError, "The parent_values '#{parent_values.to_yaml}' exceeds the hierarchy depth #{levels.to_yaml}"
         end
         
-        child_level = levels[parent_values.length].to_s
+        child_level = levels[parent_values.length]
         
         # Create the conditions array. Will work with 1.1.6.
         conditions_parts = []
@@ -259,18 +259,22 @@ module ActiveWarehouse #:nodoc
         
         conditions = [conditions_parts.join(' AND ')] + conditions_values unless conditions_parts.empty?
         
-        child_level_method = child_level.to_sym
-        child_level = connection.quote_column_name(child_level)
+        debugger
+        child_level = [child_level] unless child_level.is_a? Array
+        
+        child_level_methods = child_level.map{|e|e.to_sym}
+        child_level = child_level.map{|e| connection.quote_column_name(e)}
         order = level_orders[child_level] || self.order || child_level
         
-        select_sql = "distinct #{child_level}"
+        select_sql = "distinct #{child_level.map.join(', ')}"
         select_sql += ", #{order}" unless order == child_level
         options = {:select => select_sql, :order => order}
-
+        
+        
         options[:conditions] = conditions unless conditions.nil?
         
         find(:all, options).map do |dim|
-          dim.send(child_level_method)
+          child_level_methods.map{|m| dim.send(m)}.join(' ')
         end.uniq
       end
       alias :available_children_values :available_child_values

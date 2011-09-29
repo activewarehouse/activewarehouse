@@ -80,10 +80,10 @@ module ActiveWarehouse #:nodoc:
     def typecast_facts(raw_facts)
       raw_facts.each do |k,v|
         field = aggregate_fields_hash[k]
-        if field.nil?
-          raise ArgumentError, "'#{k}' is an unknown aggregate field in this query result"
-        end
-        raw_facts[k] = type_cast_aggregate_value(v, field)
+        #if field.nil?
+        #  raise ArgumentError, "'#{k}' is an unknown aggregate field in this query result"
+        #end
+        raw_facts[k] = type_cast_aggregate_value(v, field) unless field.nil?
       end
     end
 
