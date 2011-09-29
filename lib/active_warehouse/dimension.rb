@@ -263,7 +263,7 @@ module ActiveWarehouse #:nodoc
         
         child_level_methods = child_level.map{|e|e.to_sym}
         child_level = child_level.map{|e| connection.quote_column_name(e)}
-        order = level_orders[child_level] || self.order || child_level.to_s
+        order = level_orders[child_level] || self.order || child_level.join(', ')
         
         select_sql = "distinct #{child_level.map.join(', ')}"
         select_sql += ", #{order}" unless order == child_level.to_s

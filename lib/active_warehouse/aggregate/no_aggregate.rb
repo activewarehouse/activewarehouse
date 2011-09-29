@@ -216,15 +216,23 @@ module ActiveWarehouse #:nodoc:
           )
           
           
+           column_dimension_columns =  current_column_name.map do |column_name|
+              "#{column_dimension_name}_1_#{column_name}"
+            end
+
+            row_dimension_columns =  current_row_name.map do |row_name|
+              "#{row_dimension_name}_2_#{row_name}"
+            end
           
           
           
           cube_class.connection.select_all(sql).each do |row|
-            result.add_data(row.delete("#{row_dimension_name}_2_#{current_row_name}"),
-                            row.delete("#{column_dimension_name}_1_#{current_column_name}"),
+            deleted_columns_values = column_dimension_columns.map{|c| row.delete(c)}
+            deleted_rows_values = row_dimension_columns.map{|c| row.delete(c)}
+            result.add_data(deleted_rows_values.join(' '),
+                            deleted_columns_values.join(' '),
                             row) # the rest of the members of row are the fact columns
           end
-        
           result
         end
       end
