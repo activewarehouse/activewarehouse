@@ -164,7 +164,11 @@ module ActiveWarehouse #:nodoc:
 
         # build the where clause
         # first add conditions
+
         where_clause = Array(conditions)
+        
+        # clear emplty filters
+        filters.delete_if{|k,v| v.blank?}
         
         # apply filters
         filters.each do |key, value|
@@ -223,7 +227,6 @@ module ActiveWarehouse #:nodoc:
             row_dimension_columns =  current_row_name.map do |row_name|
               "#{row_dimension_name}_2_#{row_name}"
             end
-          
           
           
           cube_class.connection.select_all(sql).each do |row|

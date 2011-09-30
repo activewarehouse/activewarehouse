@@ -244,10 +244,18 @@ module ActiveWarehouse #:nodoc
         
         child_level = levels[parent_values.length]
         
+        
+        #return "All #{(levels[parent_values.length + 1 ]).to_s.pluralize.titleize}" if child_level.is_a? Array and child_level.empty?
+        return "Totals" if child_level.is_a? Array and child_level.empty?
+        
         # Create the conditions array. Will work with 1.1.6.
         conditions_parts = []
         conditions_values = []
+        
+        
+        
         parent_values.each_with_index do |value, index|
+          next if value.blank?
           conditions_parts << "#{levels[index]} = ?"
           conditions_values << value
         end
@@ -268,7 +276,6 @@ module ActiveWarehouse #:nodoc
         select_sql = "distinct #{child_level.map.join(', ')}"
         select_sql += ", #{order}" unless order == child_level.to_s
         options = {:select => select_sql, :order => order}
-        
         
         options[:conditions] = conditions unless conditions.nil?
         
