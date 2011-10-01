@@ -252,8 +252,6 @@ module ActiveWarehouse #:nodoc
         conditions_parts = []
         conditions_values = []
         
-        
-        
         parent_values.each_with_index do |value, index|
           next if value.blank?
           conditions_parts << "#{levels[index]} = ?"
@@ -270,8 +268,8 @@ module ActiveWarehouse #:nodoc
         child_level = [child_level] unless child_level.is_a? Array
         
         child_level_methods = child_level.map{|e|e.to_sym}
+        order = level_orders[child_level.join(' ').to_sym] || self.order || child_level.join(', ')
         child_level = child_level.map{|e| connection.quote_column_name(e)}
-        order = level_orders[child_level] || self.order || child_level.join(', ')
         
         select_sql = "distinct #{child_level.map.join(', ')}"
         select_sql += ", #{order}" unless order == child_level.to_s
