@@ -1,7 +1,7 @@
 module ActiveWarehouse::View
   module YuiAdapter
     def yui_column_definitions(table_view)
-      columns = [{:key => 'row_dimension_key', :label => table_view.row_dimension.hierarchy_level.to_s.humanize.titleize, :sortable => true}]
+      columns = [{:key => 'row_dimension_key', :label => table_view.row_dimension.hierarchy_level_label, :sortable => true}]
       table_view.column_dimension.values.each do |col_dim_value|
         if table_view.column_dimension.has_children?
           col_dim_query = col_dim_value == "Totals" ? "" : col_dim_value

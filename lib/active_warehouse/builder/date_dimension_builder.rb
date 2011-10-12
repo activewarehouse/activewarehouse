@@ -34,6 +34,11 @@ module ActiveWarehouse #:nodoc:
       def build(options={})
         (start_date..end_date).map { |date| record_from_date(date) }
       end
+      
+      def self.build_one(date)
+        builder = self.new
+        builder.send(:record_from_date,date)
+      end
 
       private
 

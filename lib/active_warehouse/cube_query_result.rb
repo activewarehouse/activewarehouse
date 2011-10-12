@@ -50,7 +50,7 @@ module ActiveWarehouse #:nodoc:
     def add_data(row_value, col_value, aggregated_facts)
       #puts "Adding data for #{row_value}, #{col_value} [data=[#{aggregated_facts.inspect}]]"
       row_value = "Totals" if row_value.empty?
-      col_value = "Totals" if row_value.empty?
+      col_value = "Totals" if col_value.empty?
       @values_map[row_value.to_s] ||= {}
       @values_map[row_value.to_s][col_value.to_s] = typecast_facts(aggregated_facts)
     end

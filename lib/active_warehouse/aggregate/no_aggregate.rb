@@ -228,7 +228,6 @@ module ActiveWarehouse #:nodoc:
               "#{row_dimension_name}_2_#{row_name}"
             end
           
-          
           cube_class.connection.select_all(sql).each do |row|
             deleted_columns_values = column_dimension_columns.map{|c| row.delete(c)}
             deleted_rows_values = row_dimension_columns.map{|c| row.delete(c)}
