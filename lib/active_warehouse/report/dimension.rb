@@ -64,7 +64,7 @@ module ActiveWarehouse #:nodoc:
         if hierarchy_level.is_a?(Array)
           hierarchy_level.map(&:to_s).map(&:humanize).map(&:titleize).join(' - ')
         else
-          hierarchy_levels.humanize.titleize
+          hierarchy_level.humanize.titleize
         end
       end
       
