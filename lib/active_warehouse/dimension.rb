@@ -211,10 +211,7 @@ module ActiveWarehouse #:nodoc
         conditions_parts = []
         conditions_values = []
         
-        dimension_filter.each do |key, value|
-          conditions_parts  <<  "#{key} = ?"
-          conditions_values <<  value
-        end
+        process_dimension_filter(conditions_parts, conditions_values)
         
         conditions = [conditions_parts.join(' AND ')] + conditions_values unless conditions_parts.empty?
         
@@ -258,10 +255,7 @@ module ActiveWarehouse #:nodoc
           conditions_values << value
         end
         
-        dimension_filter.each do |key, value|
-          conditions_parts  <<  "#{key} = ?"
-          conditions_values <<  value
-        end
+        process_dimension_filter(conditions_parts, conditions_values)
         
         conditions = [conditions_parts.join(' AND ')] + conditions_values unless conditions_parts.empty?
         
@@ -309,6 +303,24 @@ module ActiveWarehouse #:nodoc
       # Get the value tree cache
       def value_tree_cache
         @value_tree_cache ||= {}
+      end
+      
+      def process_dimension_filter(conditions_parts, conditions_values)
+        if dimension_filter.is_a?(String)
+          conditions_parts << dimension_filter unless dimension_filter.blank?
+        elsif dimension_filter.is_a?(Array)
+          
+          unless dimension_filter.empty? 
+            conditions_parts << dimension_filter.first
+            conditions_values.concat(dimension_filter[1..-1])
+          end
+        
+        elsif dimension_filter.is_a?(Hash)
+          dimension_filter.each do |key, value|
+            conditions_parts  <<  "#{key} = ?"
+            conditions_values <<  value
+          end
+        end
       end
       
       class Node#:nodoc:
