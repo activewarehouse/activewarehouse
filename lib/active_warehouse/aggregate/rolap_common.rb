@@ -68,12 +68,14 @@ module ActiveWarehouse
       # Convenience accessor that delegates to cube class method aggregate_fields.
       # Returns an array of AggregateField instances, which are the fact columns
       # from the fact table.
+      # This is used by PipelinedRolapAggregate
       def aggregate_fields
         cube_class.aggregate_fields
       end
       
       # The SQL fragment for tables and joins which is used during the population
       # of the "flattened" cube
+      # This is used by PipelinedRolapAggregate
       def tables_and_joins
         sql = "#{fact_class.table_name}"
         cube_class.dimensions_hierarchies.each do |dimension_name, hierarchy_name|
