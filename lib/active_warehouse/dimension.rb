@@ -12,6 +12,8 @@ module ActiveWarehouse #:nodoc
   class Dimension < ActiveRecord::Base
     include ActiveWarehouse::HierarchicalDimension
     include ActiveWarehouse::SlowlyChangingDimension
+
+    self.abstract_class = true
     
     after_save :expire_value_tree_cache
     

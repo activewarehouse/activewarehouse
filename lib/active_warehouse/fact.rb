@@ -6,6 +6,9 @@ module ActiveWarehouse #:nodoc
   # dimensions. All measurements in a fact
   # table must be at the same grain.
   class Fact < ActiveRecord::Base
+
+    self.abstract_class = true
+
     class << self
       # Array of AggregateField instances
       attr_accessor :aggregate_fields
@@ -20,7 +23,7 @@ module ActiveWarehouse #:nodoc
       # Array of belongs_to +Reflection+ instances that represent the
       # dimensions for this fact.
       attr_accessor :dimension_relationships
-      
+
       # Acts as an alias for +belongs_to+, yet marks this relationship
       # as a dimension.  You must call +dimension+ instead of +belongs_to+.
       # Accepts same options as +belongs_to+.
