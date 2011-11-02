@@ -29,7 +29,7 @@ module ActiveWarehouse #:nodoc
       
       def query(*args)
         options = parse_query_args(*args)
-        puts "#{self.class.name}.query(#{options.inspect})"
+        # puts "#{self.class.name}.query(#{options.inspect})"
         
         # throw an error if there is no column and/or row
         cstage     = options[:cstage] || 0
@@ -125,23 +125,24 @@ module ActiveWarehouse #:nodoc
           order_fields << "#{full_column_name} DESC" unless cstage == 'all'
           order = order_fields.join(', ')
         end
-
+        
         #  see if the levels are all > for any non-base dim
         use_base = false
         aggregate_options = cube_class.aggregate_options
         aggregate_levels = aggregate_dimension_fields.collect{ |dim, levels| 
           l = [[(dimension_levels[dim] || 0), levels.count].min, 0].max
-          unless create_all_level?(dim, aggregate_options) || (l > 0)
+          unless in_base?(dim, aggregate_options) || (l > 0)
             use_base = true
           end
           l
         }
         # puts "should you use the base for this query? #{use_base}"
+        
         if use_base
           aggregate_options[:base].query(*args)
         else
           query_table_name = aggregate_rollup_name(aggregate_table_name, aggregate_levels)
-
+          
           # build the SQL query
           sql = ''
           sql << "SELECT\n"
@@ -166,7 +167,7 @@ module ActiveWarehouse #:nodoc
           result
         end
       end
-      
+
       # Build and populate the data store
       def populate(options={})
         # puts "PipelinedRolapAggregate::populate #{options.inspect}"
@@ -186,7 +187,7 @@ module ActiveWarehouse #:nodoc
       end
       
       def create_and_populate_aggregate(options={})
-        puts "PipelinedRolapAggregate::create_and_populate_aggregate #{options.inspect}"
+        # puts "PipelinedRolapAggregate::create_and_populate_aggregate #{options.inspect}"
         base_name = aggregate_table_name
         dimension_fields = aggregate_dimension_fields
         aggregate_levels = dimension_fields.collect{|dim, levels|
@@ -194,14 +195,17 @@ module ActiveWarehouse #:nodoc
           (min_level..levels.count).collect.reverse
         }.sequence
         
-        puts "aggregate_levels:\n#{aggregate_levels.inspect}"
+        # puts "aggregate_levels:\n#{aggregate_levels.inspect}"
         
-        # first time through use the fact table, don't after that
+        # first time through always use the fact table, don't after that if piplining
         options.merge!({:use_fact => true})
+
+        find_latest_record(base_name, dimension_fields, aggregate_levels.first, options)
+        
         aggregate_levels.each do |levels|
           create_aggregate_table(base_name, dimension_fields, levels, options)
           populate_aggregate_table(base_name, dimension_fields, levels, options)
-          options.delete(:use_fact)
+          options.delete(:use_fact) unless options[:always_use_fact]
         end
         
       end
@@ -210,9 +214,13 @@ module ActiveWarehouse #:nodoc
         # see if a base is defined, if not, always make all levels
         # if there is a base, see if this is a dim in the base
         # if it is in the base, then we need to do all, if it is not in base, do not do all
+        !options[:base] || in_base?(dim, options)
+      end
+
+      def in_base?(dim, options)
         options[:base] && options[:base].dimension_classes.include?(dim)
       end
-      
+
       # build and populate a table which group by's all dimension columns.
       # this should include all the columns from the hierarchies in the dimension
       # should it have the column id levels? only if in the hierarchy
@@ -235,13 +243,13 @@ module ActiveWarehouse #:nodoc
         
         if !connection.tables.include?(table_name)
           aggregate_table_options = (options[:aggregate_table_options] || {}).merge({:id => false})
-          puts "create_table: #{table_name}"
+          # puts "create_table: #{table_name}"
           connection.create_table(table_name, aggregate_table_options) do |t|
             dimension_fields.each_with_index do |pair, i|
               dim = pair.first
               levels = pair.last
               max_level = current_levels[i]
-              puts "dim.name = #{dim.name}, max = #{max_level}, i = #{i}"
+              # puts "dim.name = #{dim.name}, max = #{max_level}, i = #{i}"
               levels.each_with_index do |field, j|
                 break if (j >= max_level)
                 column_options = {:null=>false}
@@ -283,19 +291,42 @@ module ActiveWarehouse #:nodoc
           
           # add index per dimension here (not for aggregate fields)
           index_columns.each{ |dimension_column|
-            puts "making index for: #{table_name} on: #{dimension_column}"
+            # puts "making index for: #{table_name} on: #{dimension_column}"
             connection.add_index(table_name, dimension_column, :name => "by_#{dimension_column}")
           }
           
           # Add a unique index for the 
           unless unique_index_columns.empty?
-            puts "making unique index for: #{table_name} on: #{unique_index_columns.inspect}"
+            # puts "making unique index for: #{table_name} on: #{unique_index_columns.inspect}"
             connection.add_index(table_name, unique_index_columns, :unique => true, :name => "by_unique_dims") 
           end
           
-          puts "create_aggregate_table end"
+          # puts "create_aggregate_table end"
           table_name
         end
+        
+      end
+      
+      def find_latest_record(base_name, dimension_fields, current_levels, options={})
+        target_rollup = aggregate_rollup_name(base_name, current_levels)
+        new_rec_dim_class = self.new_records_only ? fact_class.dimension_class(new_records_dimension) : nil
+        if (self.new_records_only && !self.new_records_record)
+          latest = nil
+          new_records_field = dimension_fields[new_rec_dim_class].last
+          find_latest_sql = "SELECT #{new_records_field} AS latest FROM #{target_rollup} GROUP BY #{new_records_field} ORDER BY #{new_records_field} DESC LIMIT #{[(new_records_offset - 1), 0].max}, 1"
+          # puts "\n\nfind_latest_sql = #{find_latest_sql}\n\n"
+          latest = connection.select_one(find_latest_sql);
+          
+          if latest
+            # puts "found latest: #{latest.inspect}"
+            # puts "find latest for dim: #{new_rec_dim_class.name}.where(#{new_records_field.name} => #{latest['latest']}).first"
+            self.new_records_record = new_rec_dim_class.where(new_records_field.name=>latest['latest']).first
+          else
+            self.new_records_record = nil
+          end
+        end
+        
+        # puts "self.new_records_record = #{self.new_records_record.inspect}"
         
       end
       
@@ -313,24 +344,6 @@ module ActiveWarehouse #:nodoc
         delete_sql = nil
         
         if (options[:use_fact])
-          if (self.new_records_only && !self.new_records_record)
-            latest = nil
-            new_records_field = dimension_fields[new_rec_dim_class].last
-            find_latest_sql = "SELECT #{new_records_field} AS latest FROM #{target_rollup} GROUP BY #{new_records_field} ORDER BY #{new_records_field} DESC LIMIT #{[(new_records_offset - 1), 0].max}, 1"
-            # puts "find_latest_sql = #{find_latest_sql}"
-            latest = connection.select_one(find_latest_sql);
-            
-            if latest
-              # puts "found latest: #{latest.inspect}"
-              # puts "find latest for dim: #{new_rec_dim_class.name}.where(#{new_records_field.name} => #{latest['latest']}).first"
-              self.new_records_record = new_rec_dim_class.where(new_records_field.name=>latest['latest']).first
-            else
-              self.new_records_record = nil
-            end
-          end
-          
-          puts "self.new_records_record = #{self.new_records_record.inspect}"
-          
           from_tables_and_joins = tables_and_joins
         else
           from_tables_and_joins = parent_aggregate_rollup_name(base_name, dimension_fields, current_levels)
@@ -361,7 +374,7 @@ module ActiveWarehouse #:nodoc
               end
               where_clause = "WHERE\t\t(" + new_rec_fields.join(" AND\n\t\t") + ") "
               
-              puts "create new records only condition #{where_clause}"
+              # puts "create new records only condition #{where_clause}"
               
               # no need to delete now that we're using the replace bulk load option, 
               # and have created unique keys on the aggregate to make that work
@@ -397,11 +410,26 @@ module ActiveWarehouse #:nodoc
 
         aggregate_column_names = aggregate_fields.collect do |c|
           if options[:use_fact]
-            "#{c.strategy_name}(#{c.name}) AS #{c.label_for_table}"
+            # if we are going against the fact, all strategies are legit - whew!
+            if c.is_distinct?
+              "#{c.strategy_name}(distinct #{fact_class.table_name}.#{c.name}) AS #{c.label_for_table}"
+            else
+              "#{c.strategy_name}(#{fact_class.table_name}.#{c.name}) AS #{c.label_for_table}"
+            end
           else
-            "#{c.strategy_name == :avg ? :avg : :sum}(#{c.label_for_table}) AS #{c.label_for_table}"
+            # if we are are populating from an aggregate table, check if it is additive
+            if c.is_additive?
+              # if strategy is a count or sum, we need to sum it. avg, min, and max run (though avg seems like it will be wrong often)
+              "#{[:min,:max,:avg].include?(c.strategy_name) ? c.strategy_name : :sum}(#{c.label_for_table}) AS #{c.label_for_table}"
+            elsif [:min,:max].include?(c.strategy_name)
+              # if min, and max, will work even if not additive
+              "#{c.strategy_name}(#{c.label_for_table}) AS #{c.label_for_table}"
+            else
+              # otherwise, for a nonadditive, non min/max, just return 0 rather than be an incorrect value
+              "0 AS #{c.label_for_table}"
+            end
           end
-        end
+        end.compact
 
         load_aggregate_column_names = aggregate_fields.collect{|c| c.label_for_table}
 
@@ -436,7 +464,7 @@ module ActiveWarehouse #:nodoc
           
           # connection.bulk_load(outfile, target_rollup, options.merge({:replace=>true}))
           options[:columns] = load_dimension_column_names + load_aggregate_column_names
-          puts options.inspect + "\n--------------------------------------------------------------------------------\n"
+          # puts options.inspect + "\n--------------------------------------------------------------------------------\n"
           connection.bulk_load(outfile, target_rollup, options)
         end
       end
