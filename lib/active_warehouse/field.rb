@@ -59,7 +59,7 @@ module ActiveWarehouse #:nodoc:
     # convert the label into something we can use in a table.
     # i.e., 'Sum of Transactions' becomes 'sum_of_transactions'
     def label_for_table
-      label.gsub(/ /, '_').downcase
+      label.to_s.gsub(/ /, '_').downcase
     end
     
     # returns the table name that has this fact column

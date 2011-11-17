@@ -310,7 +310,8 @@ module ActiveWarehouse #:nodoc
       def find_latest_record(base_name, dimension_fields, current_levels, options={})
         target_rollup = aggregate_rollup_name(base_name, current_levels)
         new_rec_dim_class = self.new_records_only ? fact_class.dimension_class(new_records_dimension) : nil
-        if (self.new_records_only && !self.new_records_record)
+
+        if (self.new_records_only && !self.new_records_record && connection.tables.include?(target_rollup))
           latest = nil
           new_records_field = dimension_fields[new_rec_dim_class].last
           find_latest_sql = "SELECT #{new_records_field} AS latest FROM #{target_rollup} GROUP BY #{new_records_field} ORDER BY #{new_records_field} DESC LIMIT #{[(new_records_offset - 1), 0].max}, 1"
