@@ -9,7 +9,7 @@ module ActiveWarehouse #:nodoc:
     def initialize(aggregate_fields)
       raise ArgumentError, "aggregate_fields must not be empty" unless aggregate_fields && aggregate_fields.size > 0
       @aggregate_fields_hash = {}
-      aggregate_fields.each {|c| @aggregate_fields_hash[c.label] = c}
+      aggregate_fields.each {|c| @aggregate_fields_hash[c.label.to_s] = c}
       @values_map = {}
     end
 
@@ -79,7 +79,7 @@ module ActiveWarehouse #:nodoc:
     
     def typecast_facts(raw_facts)
       raw_facts.each do |k,v|
-        field = aggregate_fields_hash[k]
+        field = aggregate_fields_hash[k.to_s]
         if field.nil?
           raise ArgumentError, "'#{k}' is an unknown aggregate field in this query result"
         end

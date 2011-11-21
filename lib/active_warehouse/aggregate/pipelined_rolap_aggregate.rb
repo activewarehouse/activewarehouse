@@ -29,7 +29,7 @@ module ActiveWarehouse #:nodoc
       
       def query(*args)
         options = parse_query_args(*args)
-        # puts "#{self.class.name}.query(#{options.inspect})"
+        # puts "\n#{self.class.name}.query(#{options.inspect})\n"
         
         # throw an error if there is no column and/or row
         cstage     = options[:cstage] || 0
@@ -141,7 +141,7 @@ module ActiveWarehouse #:nodoc
         if use_base
           aggregate_options[:base].query(*args)
         else
-          query_table_name = aggregate_rollup_name(aggregate_table_name, aggregate_levels)
+          query_table_name = aggregate_rollup_name(aggregate_table_name(options), aggregate_levels)
           
           # build the SQL query
           sql = ''
@@ -157,9 +157,11 @@ module ActiveWarehouse #:nodoc
           sql << "LIMIT #{limit}\n" if limit
 
           # execute the query and return the results as a CubeQueryResult object
+          # puts "\n\n aggregate_fields: #{aggregate_fields.inspect}\n\n"
           result = ActiveWarehouse::CubeQueryResult.new(aggregate_fields)
           rows = connection.select_all(sql)
           rows.each do |row|
+            # puts "\n\n result row: #{row.inspect}\n\n"
             result.add_data(row.delete(current_row_name.to_s),
                             row.delete(current_column_name.to_s),
                             row) # the rest of the members of row are the fact columns
@@ -188,7 +190,7 @@ module ActiveWarehouse #:nodoc
       
       def create_and_populate_aggregate(options={})
         # puts "PipelinedRolapAggregate::create_and_populate_aggregate #{options.inspect}"
-        base_name = aggregate_table_name
+        base_name = aggregate_table_name(options)
         dimension_fields = aggregate_dimension_fields
         aggregate_levels = dimension_fields.collect{|dim, levels|
           min_level = create_all_level?(dim, options) ? 0 : 1
@@ -510,8 +512,8 @@ module ActiveWarehouse #:nodoc
       end
       
       # The table name to use for the rollup
-      def aggregate_table_name
-        "#{cube_class.name.tableize.singularize}_agg"
+      def aggregate_table_name(options={})
+        "#{options[:prefix]}#{cube_class.name.tableize.singularize}_agg"
       end
       
       def aggregate_dimension_fields
