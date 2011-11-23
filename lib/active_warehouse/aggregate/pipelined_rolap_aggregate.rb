@@ -127,18 +127,18 @@ module ActiveWarehouse #:nodoc
         end
         
         #  see if the levels are all > for any non-base dim
-        use_base = false
+        use_base = true
         aggregate_options = cube_class.aggregate_options
         aggregate_levels = aggregate_dimension_fields.collect{ |dim, levels| 
           l = [[(dimension_levels[dim] || 0), levels.count].min, 0].max
-          unless in_base?(dim, aggregate_options) || (l > 0)
-            use_base = true
+          if !in_base?(dim, aggregate_options) && (l > 0)
+            use_base = false
           end
           l
         }
         # puts "should you use the base for this query? #{use_base}"
         
-        if use_base
+        if use_base && aggregate_options[:base]
           aggregate_options[:base].query(*args)
         else
           query_table_name = aggregate_rollup_name(aggregate_table_name(options), aggregate_levels)
