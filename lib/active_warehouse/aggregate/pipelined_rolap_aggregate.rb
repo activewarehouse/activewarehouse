@@ -427,29 +427,29 @@ module ActiveWarehouse #:nodoc
         end
 
         aggregate_column_names = aggregate_fields.collect do |c|
+          result = nil
           if options[:use_fact]
             # if we are going against the fact, all strategies are legit - whew!
-            if c.is_distinct?
-              "#{c.strategy_name}(distinct #{fact_class.table_name}.#{c.name}) AS #{c.label_for_table}"
-            else
-              "#{c.strategy_name}(#{fact_class.table_name}.#{c.name}) AS #{c.label_for_table}"
+
+            if c.is_additive? || aggregate_options[:always_use_fact] || [:min,:max].include?(c.strategy_name)
+              distinct = c.is_distinct? ? 'distinct ' : ''
+              result = "#{c.strategy_name}(#{distinct}#{fact_class.table_name}.#{c.name}) AS #{c.label_for_table}"
             end
           else
             # if we are are populating from an aggregate table, check if it is additive
             if c.is_additive?
               # if strategy is a count or sum, we need to sum it. avg, min, and max run (though avg seems like it will be wrong often)
-              "#{[:min,:max,:avg].include?(c.strategy_name) ? c.strategy_name : :sum}(#{c.label_for_table}) AS #{c.label_for_table}"
+              result = "#{[:min,:max,:avg].include?(c.strategy_name) ? c.strategy_name : :sum}(#{c.label_for_table}) AS #{c.label_for_table}"
             elsif [:min,:max].include?(c.strategy_name)
               # if min, and max, will work even if not additive
-              "#{c.strategy_name}(#{c.label_for_table}) AS #{c.label_for_table}"
-            else
-              # otherwise, for a nonadditive, non min/max, just return 0 rather than be an incorrect value
-              "0 AS #{c.label_for_table}"
+              result = "#{c.strategy_name}(#{c.label_for_table}) AS #{c.label_for_table}"
             end
           end
+          load_aggregate_column_names << c.label_for_table if result
+          result
         end.compact
 
-        load_aggregate_column_names = aggregate_fields.collect{|c| c.label_for_table}
+        # load_aggregate_column_names = aggregate_fields.collect{|c| c.label_for_table}
 
         options[:fields] = {} unless options[:fields]
         options[:fields][:delimited_by] = ','
