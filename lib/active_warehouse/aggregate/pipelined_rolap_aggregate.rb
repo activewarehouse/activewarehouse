@@ -431,7 +431,7 @@ module ActiveWarehouse #:nodoc
           if options[:use_fact]
             # if we are going against the fact, all strategies are legit - whew!
 
-            if c.is_additive? || aggregate_options[:always_use_fact] || [:min,:max].include?(c.strategy_name)
+            if c.is_additive? || options[:always_use_fact] || [:min,:max].include?(c.strategy_name)
               distinct = c.is_distinct? ? 'distinct ' : ''
               result = "#{c.strategy_name}(#{distinct}#{fact_class.table_name}.#{c.name}) AS #{c.label_for_table}"
             end
