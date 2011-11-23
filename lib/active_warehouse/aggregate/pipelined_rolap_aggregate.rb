@@ -143,12 +143,27 @@ module ActiveWarehouse #:nodoc
         else
           query_table_name = aggregate_rollup_name(aggregate_table_name(options), aggregate_levels)
           
+          aggregate_column_names = aggregate_fields.collect do |c|
+            
+            if c.is_additive? || aggregate_options[:always_use_fact]
+              # if strategy is a count or sum, we need to sum it. avg, min, and max run (though avg seems like it will be wrong often)
+              "#{[:min,:max,:avg].include?(c.strategy_name) ? c.strategy_name : :sum}(#{c.label_for_table}) AS '#{c.label}'"
+            elsif [:min,:max].include?(c.strategy_name)
+              # if min, and max, will work even if not additive
+              "#{c.strategy_name}(#{c.label_for_table}) AS '#{c.label}'"
+            else
+              # otherwise, for a nonadditive, non min/max, just return 0 rather than be an incorrect value
+              "0 AS '#{c.label}'"
+            end
+            
+          end.compact
+          
           # build the SQL query
           sql = ''
           sql << "SELECT\n"
           sql << "#{full_column_name} AS '#{current_column_name}',\n"
           sql << "#{full_row_name} AS '#{current_row_name}',\n"
-          sql << (aggregate_fields.collect{|c| "#{c.strategy_name == :avg ? :avg : :sum}(#{c.label_for_table}) AS '#{c.label}'"}.join(",\n") + "\n")
+          sql << (aggregate_column_names.join(",\n") + "\n")
           sql << "FROM #{query_table_name}\n"
           sql << "WHERE (#{where_clause.join(") AND\n(")})\n"
           sql << "AND (#{sanitize(conditions)})\n" if conditions
