@@ -42,7 +42,7 @@ module ActiveWarehouse #:nodoc
         
         column_dimension_name = options[:column_dimension_name] || options[:column]
         column_dimension      = fact_class.dimension_class(column_dimension_name)
-        column_hierarchy      = dimension_hierarchy(column_dimension_name)
+        column_hierarchy      = cube_class.dimension_hierarchy(column_dimension_name)
         
         if cstage.to_s == 'all'
           current_column_name =  "#{column_dimension_name}_all"
@@ -54,7 +54,7 @@ module ActiveWarehouse #:nodoc
         
         row_dimension_name    = options[:row_dimension_name] || options[:row]
         row_dimension         = fact_class.dimension_class(row_dimension_name)
-        row_hierarchy         = dimension_hierarchy(row_dimension_name)
+        row_hierarchy         = cube_class.dimension_hierarchy(row_dimension_name)
         
         if rstage.to_s == 'all'
           current_row_name =  "#{row_dimension_name}_all"
@@ -89,7 +89,7 @@ module ActiveWarehouse #:nodoc
           dimension_name, column = key.split('.')
           
           dim_class     = fact_class.dimension_class(dimension_name.to_sym)
-          dim_hierarchy = dimension_hierarchy(dimension_name.to_sym)
+          dim_hierarchy = cube_class.dimension_hierarchy(dimension_name.to_sym)
           dim_level     = dim_hierarchy.index(column.to_sym)
           name          = "#{dimension_name}_#{column}"
           
@@ -100,6 +100,8 @@ module ActiveWarehouse #:nodoc
                 where_clause << "(#{name} >= #{sanitize(value.begin)}) AND (#{name} <= #{sanitize(value.end)})"
               elsif value == :not_null
                 where_clause << "#{name} IS NOT NULL"
+              elsif value == :not_blank
+                where_clause << "#{name} IS NOT NULL AND #{name} != ''"
               elsif (value.nil? || value == :null)
                 where_clause << "#{name} IS NULL"
               else
@@ -539,7 +541,7 @@ module ActiveWarehouse #:nodoc
           dimension_class = fact_class.dimension_class(dimension_name)
           dim_cols[dimension_class] = []
 
-          dimension_hierarchy(dimension_name).each do |level|
+          cube_class.dimension_hierarchy(dimension_name).each do |level|
             # puts "level.to_s = #{level.to_s}"
             column = dimension_class.columns_hash[level.to_s]
             dim_cols[dimension_class] << Field.new( dimension_class,
@@ -555,14 +557,7 @@ module ActiveWarehouse #:nodoc
         end
         dim_cols
       end
-      
-      def dimension_hierarchy(dimension_name)
-        hierarchy_name = cube_class.dimensions_hierarchies[dimension_name]
-        dimension_class = fact_class.dimension_class(dimension_name)
-        levels = hierarchy_name ? dimension_class.hierarchy_levels[hierarchy_name] || [hierarchy_name] : ['id']
-        levels.uniq
-      end
-      
+
     end
 
   end

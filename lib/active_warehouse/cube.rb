@@ -79,6 +79,13 @@ module ActiveWarehouse
         @dimensions_hierarchies
       end
       
+      def dimension_hierarchy(dimension_name)
+        hierarchy_name = dimensions_hierarchies[dimension_name]
+        dimension_class = fact_class.dimension_class(dimension_name)
+        levels = hierarchy_name ? dimension_class.hierarchy_levels[hierarchy_name] || [hierarchy_name] : ['id']
+        levels.uniq
+      end
+
       # returns true if this cube pivots on a hierarchical dimension.
       def pivot_on_hierarchical_dimension?
         dimension_classes.each do |dimension|
