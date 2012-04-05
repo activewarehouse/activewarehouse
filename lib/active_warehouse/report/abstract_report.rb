@@ -101,7 +101,7 @@ module ActiveWarehouse #:nodoc:
       # Get the list of displayed fact attributes. If this value is not 
       # specified then all aggregate and calculated fields will be displayed
       def fact_attributes
-        @fact_attributes ||= returning Array.new do |fa|
+        @fact_attributes ||= Array.new.tap do |fa|
           fact_class.aggregate_fields.each { |field| fa << field }
           fact_class.calculated_fields.each { |field| fa << field }
         end

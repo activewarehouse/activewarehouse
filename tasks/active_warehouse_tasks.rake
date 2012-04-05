@@ -2,7 +2,7 @@ namespace :warehouse do
   desc "Drop and create the current database"
   task :recreate => :environment do
     abcs = ActiveRecord::Base.configurations
-    ActiveRecord::Base.establish_connection(abcs[RAILS_ENV])
+    ActiveRecord::Base.establish_connection(abcs[Rails.env])
     puts "Recreating #{ActiveRecord::Base.connection.current_database}"
     ActiveRecord::Base.connection.recreate_database(ActiveRecord::Base.connection.current_database)
     ActiveRecord::Base.connection.reconnect!
@@ -11,7 +11,7 @@ namespace :warehouse do
   desc "Build a 'standard' date dimension"
   task :build_date_dimension => :environment do
     abcs = ActiveRecord::Base.configurations
-    ActiveRecord::Base.establish_connection(abcs[RAILS_ENV])
+    ActiveRecord::Base.establish_connection(abcs[Rails.env])
 
     start_date = (ENV['START_DATE'] ? Time.parse(ENV['START_DATE']) : Time.now.years_ago(5))
     end_date = (ENV['END_DATE'] ? Time.parse(ENV['END_DATE']) : Time.now )
@@ -36,7 +36,7 @@ namespace :warehouse do
   desc "Build random data for all facts and dimensions in the models directory, excluding date"
   task :build_random_data => :environment do
     abcs = ActiveRecord::Base.configurations
-    ActiveRecord::Base.establish_connection(abcs[RAILS_ENV])
+    ActiveRecord::Base.establish_connection(abcs[Rails.env])
     require 'pp'
     
     name = ENV['NAME']
