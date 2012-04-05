@@ -1,4 +1,4 @@
-class <%= class_name.pluralize.delete('::') %> < ActiveRecord::Migration
+class Create<%= class_name.pluralize.delete('::') %> < ActiveRecord::Migration
   def self.up
     fields = {
       # the following are the required bridge table columns for
@@ -18,7 +18,7 @@ class <%= class_name.pluralize.delete('::') %> < ActiveRecord::Migration
     fields.each do |name,type|
       add_index :<%= table_name %>, name unless type == :text      
     end
-    add_index :<%= table_name %>, [:parent_id, :child_id, :num_levels_from_parent], :unique => true
+    add_index :<%= table_name %>, [:parent_id, :child_id, :num_levels_from_parent], :name => "index_<%= table_name %>_ids" :unique => true
   end
 
   def self.down
