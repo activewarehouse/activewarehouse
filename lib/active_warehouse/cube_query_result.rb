@@ -49,6 +49,8 @@ module ActiveWarehouse #:nodoc:
     # This method will typecast the values in aggregated_facts.
     def add_data(row_value, col_value, aggregated_facts)
       #puts "Adding data for #{row_value}, #{col_value} [data=[#{aggregated_facts.inspect}]]"
+      row_value = "Totals" if row_value.empty?
+      col_value = "Totals" if col_value.empty?
       @values_map[row_value.to_s] ||= {}
       @values_map[row_value.to_s][col_value.to_s] = typecast_facts(aggregated_facts)
     end
@@ -78,12 +80,13 @@ module ActiveWarehouse #:nodoc:
     end
     
     def typecast_facts(raw_facts)
+      
       raw_facts.each do |k,v|
         field = aggregate_fields_hash[k.to_s]
         if field.nil?
-          raise ArgumentError, "'#{k}' is an unknown aggregate field in this query result"
-        end
-        raw_facts[k] = type_cast_aggregate_value(v, field)
+                 raise ArgumentError, "'#{k}' is an unknown aggregate field in this query result"
+                end
+        raw_facts[k] = type_cast_aggregate_value(v, field) unless field.nil?
       end
     end
 

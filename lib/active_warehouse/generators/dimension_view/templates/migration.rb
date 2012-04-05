@@ -1,4 +1,4 @@
-class <%= migration_name %> < ActiveRecord::Migration
+class Create<%= class_name.pluralize.delete('::') %> < ActiveRecord::Migration
   def self.up
     create_view "<%= view_name %>", "<%= view_query %>" do |t|
       <%- view_attributes.each do |view_attribute| -%>

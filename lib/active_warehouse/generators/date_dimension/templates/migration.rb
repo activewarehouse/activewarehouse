@@ -1,4 +1,4 @@
-class <%= migration_name %> < ActiveRecord::Migration
+class <%= class_name.pluralize.delete('::') %> < ActiveRecord::Migration
   def self.up
     create_table :<%= table_name %> do |t|
       t.column :sql_date_stamp, :date, :null => false                       # SQL Date object

@@ -121,6 +121,17 @@ module ActiveWarehouse #:nodoc
         return class_for_name(dimension)
       end
       
+      
+      # Allows to add SQL conditions when the available values for this dimension
+      # Ex: WHERE color IN('blue', 'red')
+      def define_dimension_filter(filter)
+        @dimension_filter = filter
+      end
+      
+      def dimension_filter
+        @dimension_filter ||= ""
+      end
+      
       # Returns a hash of all of the values at the specified hierarchy level 
       # mapped to the count at that level. For example, given a date dimension
       # with years from 2002 to 2004 and a hierarchy defined with:
@@ -198,7 +209,15 @@ module ActiveWarehouse #:nodoc
         level = connection.quote_column_name(level.to_s)
         order = level_orders[level] || self.order || level
         
-        options = {:select => "distinct #{order.to_s == level.to_s ? '' : order.to_s+','} #{level}", :order => order}
+        # Create the conditions array. Will work with 1.1.6.
+        conditions_parts = []
+        conditions_values = []
+        
+        process_dimension_filter(conditions_parts, conditions_values)
+        
+        conditions = [conditions_parts.join(' AND ')] + conditions_values unless conditions_parts.empty?
+        
+        options = {:select => "distinct #{order.to_s == level.to_s ? '' : order.to_s+','} #{level}", :order => order, :conditions => conditions}
         values = []
         find(:all, options).each do |dim|
           value = dim.send(level_method)
@@ -222,29 +241,40 @@ module ActiveWarehouse #:nodoc
           raise ArgumentError, "The parent_values '#{parent_values.to_yaml}' exceeds the hierarchy depth #{levels.to_yaml}"
         end
         
-        child_level = levels[parent_values.length].to_s
+        child_level = levels[parent_values.length]
+        
+        
+        #return "All #{(levels[parent_values.length + 1 ]).to_s.pluralize.titleize}" if child_level.is_a? Array and child_level.empty?
+        return "Totals" if child_level.is_a? Array and child_level.empty?
         
         # Create the conditions array. Will work with 1.1.6.
         conditions_parts = []
         conditions_values = []
+        
         parent_values.each_with_index do |value, index|
+          next if value.blank?
           conditions_parts << "#{levels[index]} = ?"
           conditions_values << value
         end
+        
+        process_dimension_filter(conditions_parts, conditions_values)
+        
         conditions = [conditions_parts.join(' AND ')] + conditions_values unless conditions_parts.empty?
         
-        child_level_method = child_level.to_sym
-        child_level = connection.quote_column_name(child_level)
-        order = level_orders[child_level] || self.order || child_level
+        child_level = [child_level] unless child_level.is_a? Array
         
-        select_sql = "distinct #{child_level}"
-        select_sql += ", #{order}" unless order == child_level
+        child_level_methods = child_level.map{|e|e.to_sym}
+        order = level_orders[child_level.join(' ').to_sym] || self.order || child_level.join(', ')
+        child_level = child_level.map{|e| connection.quote_column_name(e)}
+        
+        select_sql = "distinct #{child_level.map.join(', ')}"
+        select_sql += ", #{order}" unless order == child_level.to_s
         options = {:select => select_sql, :order => order}
-
+        
         options[:conditions] = conditions unless conditions.nil?
-
+        
         find(:all, options).map do |dim|
-          dim.send(child_level_method)
+          child_level_methods.map{|m| dim.send(m)}.join(' ')
         end.uniq
       end
       alias :available_children_values :available_child_values
@@ -275,6 +305,24 @@ module ActiveWarehouse #:nodoc
       # Get the value tree cache
       def value_tree_cache
         @value_tree_cache ||= {}
+      end
+      
+      def process_dimension_filter(conditions_parts, conditions_values)
+        if dimension_filter.is_a?(String)
+          conditions_parts << dimension_filter unless dimension_filter.blank?
+        elsif dimension_filter.is_a?(Array)
+          
+          unless dimension_filter.empty? 
+            conditions_parts << dimension_filter.first
+            conditions_values.concat(dimension_filter[1..-1])
+          end
+        
+        elsif dimension_filter.is_a?(Hash)
+          dimension_filter.each do |key, value|
+            conditions_parts  <<  "#{key} = ?"
+            conditions_values <<  value
+          end
+        end
       end
       
       class Node#:nodoc:

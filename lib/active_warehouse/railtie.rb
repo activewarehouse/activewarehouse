@@ -6,8 +6,19 @@ module ActiveWarehouse
     end
     
     generators do
-      Dir[File.expand_path('*.rb', File.dirname(__FILE__))].each do |file|
-        require file
+      # there are some dependencies between the generators so require order matters
+      # we're doing two passes at them
+      dependent_files = []
+      Dir[File.expand_path('generators/*/*.rb', File.dirname(__FILE__))].each do |file|
+        begin
+          require file
+        rescue # save them to try again
+          dependent_files << file
+        end
+      end
+      # second pass
+      dependent_files.each do |file|
+          require file
       end
     end
   end

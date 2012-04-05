@@ -1,8 +1,7 @@
-require File.dirname(__FILE__) + '<%= '/..' * class_nesting_depth %>/../test_helper'
+require 'test_helper'
 
-class <%= class_name %>Test < Test::Unit::TestCase
-  # Replace this with your real tests.
-  def test_truth
-    assert true
+class <%= class_name %>Test < ActiveSupport::TestCase
+  def test_should_be_valid
+    assert <%= class_name %>.new.valid?
   end
 end

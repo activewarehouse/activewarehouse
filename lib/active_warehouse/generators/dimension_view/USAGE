@@ -1,1 +1,1 @@
-./script/generate dimension_view NAME
+rails generate active_warehouse:dimension_view OrderDate Date

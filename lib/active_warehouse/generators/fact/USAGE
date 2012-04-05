@@ -1,1 +1,1 @@
-./script/generate fact NAME
+rails generate active_warehouse:fact FACT_NAME

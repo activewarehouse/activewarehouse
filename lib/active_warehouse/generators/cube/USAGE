@@ -1,1 +1,1 @@
-./script/generate cube NAME
+rails generate active_warehouse:cube CUBE_NAME

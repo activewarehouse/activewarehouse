@@ -74,7 +74,6 @@ module ActiveWarehouse #:nodoc:
           hierarchical_stage = rstage
           current_row_name = row_hierarchy[0]
         end
-
         fact_columns = cube_class.aggregate_fields(used_dimensions).collect { |c| 
           agg_sql = ''
           quoted_label = cube_class.connection.quote_column_name(c.label)
@@ -108,11 +107,21 @@ module ActiveWarehouse #:nodoc:
           end
           agg_sql
         }.join(",\n")
-
+        
+        current_column_name = [current_column_name] unless current_column_name.is_a? Array
+        current_row_name    = [current_row_name]    unless current_row_name.is_a? Array
+        
+        column_dimension_columns =  current_column_name.map do |column_name|
+          "#{column_dimension_name}.#{column_name} as #{column_dimension_name}_1_#{column_name}"
+        end
+        
+        row_dimension_columns =  current_row_name.map do |row_name|
+          "#{row_dimension_name}.#{row_name} as #{row_dimension_name}_2_#{row_name}"
+        end
+        
         sql = ''
         sql += "SELECT\n"
-        sql += "  #{column_dimension_name}.#{current_column_name} as #{column_dimension_name}_1_#{current_column_name},\n"
-        sql += "  #{row_dimension_name}.#{current_row_name} as #{row_dimension_name}_2_#{current_row_name},\n"
+        sql += "  #{(column_dimension_columns + row_dimension_columns).join(", \n  ")},\n"
         sql += fact_columns
         sql += "\nFROM\n"
 
@@ -155,7 +164,11 @@ module ActiveWarehouse #:nodoc:
 
         # build the where clause
         # first add conditions
+
         where_clause = Array(conditions)
+        
+        # clear emplty filters
+        filters.delete_if{|k,v| v.blank?}
         
         # apply filters
         filters.each do |key, value|
@@ -180,9 +193,16 @@ module ActiveWarehouse #:nodoc:
           end
         end
         
+        group_by_columns = current_column_name.map do |group_by_column|
+          "#{column_dimension_name}.#{group_by_column}"
+        end
+        
+        group_by_rows = current_row_name.map do |group_by_row|
+          "#{row_dimension_name}.#{group_by_row}"
+        end
+        
         sql += "\nGROUP BY\n"
-        sql += "  #{column_dimension_name}.#{current_column_name},\n"
-        sql += "  #{row_dimension_name}.#{current_row_name}"
+        sql += "  #{(group_by_columns + group_by_rows).join(", \n  ")}"
         
         if options[:order]
           order_by = options[:order]
@@ -191,19 +211,30 @@ module ActiveWarehouse #:nodoc:
           sql += %Q(\nORDER BY\n  #{order_by.join(",\n")})
         end
         
+        
         if options[:return] == :sql
           sql
         else
           result = ActiveWarehouse::CubeQueryResult.new(
             cube_class.aggregate_fields(used_dimensions)
           )
-        
+          
+          
+           column_dimension_columns =  current_column_name.map do |column_name|
+              "#{column_dimension_name}_1_#{column_name}"
+            end
+
+            row_dimension_columns =  current_row_name.map do |row_name|
+              "#{row_dimension_name}_2_#{row_name}"
+            end
+          
           cube_class.connection.select_all(sql).each do |row|
-            result.add_data(row.delete("#{row_dimension_name}_2_#{current_row_name}"),
-                            row.delete("#{column_dimension_name}_1_#{current_column_name}"),
+            deleted_columns_values = column_dimension_columns.map{|c| row.delete(c)}
+            deleted_rows_values = row_dimension_columns.map{|c| row.delete(c)}
+            result.add_data(deleted_rows_values.join(' '),
+                            deleted_columns_values.join(' '),
                             row) # the rest of the members of row are the fact columns
           end
-        
           result
         end
       end

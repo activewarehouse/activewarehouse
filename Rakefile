@@ -89,6 +89,7 @@ module AW
       s.add_dependency('actionpack',          '>= 2.1.0')
       s.add_dependency('rails_sql_views',     '>= 0.1.0')
       s.add_dependency('adapter_extensions',  '>= 0.1.0')
+      s.add_dependency('builder'          ,   '>= 2.1.2')
 
       s.rdoc_options << '--exclude' << '.'
       s.has_rdoc = false

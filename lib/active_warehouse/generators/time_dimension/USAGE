@@ -1,1 +1,1 @@
-./script/generate time_dimension
+rails generate time_dimension
