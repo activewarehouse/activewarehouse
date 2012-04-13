@@ -16,7 +16,7 @@ module ActiveWarehouse #:nodoc
             def bridge_class
               unless @bridge_class
                 unless Object.const_defined?(bridge_class_name.to_sym)
-                  Object.const_set(bridge_class_name.to_sym, Class.new(ActiveWarehouse::Bridge))
+                  Object.const_set(bridge_class_name.to_sym, Class.new(ActiveWarehouse::HierarchyBridge))
                 end
                 @bridge_class = Object.const_get(bridge_class_name.to_sym)
               end

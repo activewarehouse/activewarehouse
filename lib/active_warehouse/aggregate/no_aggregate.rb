@@ -56,7 +56,7 @@ module ActiveWarehouse #:nodoc:
         hierarchical_dimension = nil
         hierarchical_dimension_name = nil
         hierarchical_stage = nil
-        
+
         if !column_dimension.hierarchical_dimension?
           current_column_name = column_hierarchy[cstage]
         else
@@ -186,8 +186,11 @@ module ActiveWarehouse #:nodoc:
           end
           sql += "\n #{hierarchical_dimension_name}.#{hierarchical_dimension.primary_key} IN ( "
           sql += "\n SELECT #{hierarchical_dimension.parent_foreign_key} FROM #{hierarchical_dimension.bridge_class.table_name} "
-          if hierarchical_stage == 0   
-            sql += "\n WHERE #{hierarchical_dimension.bridge_class.top_flag} = #{connection.send(:quote, hierarchical_dimension.bridge_class.top_flag_value)})"
+          if hierarchical_stage == 0
+            temp_top_flag_value = hierarchical_dimension.bridge_class.top_flag_value
+            #check if boolean, and then dont add quotes
+            top_flag_value = !!temp_top_flag_value == temp_top_flag_value ?  temp_top_flag_value.to_s.capitalize : connection.send(:quote, temp_top_flag_value)
+            sql += "\n WHERE #{hierarchical_dimension.bridge_class.top_flag} = #{top_flag_value})"
           else
             sql += "\n WHERE #{hierarchical_dimension.child_foreign_key} = #{hierarchical_stage} AND #{hierarchical_dimension.levels_from_parent} = 1)"
           end

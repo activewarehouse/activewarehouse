@@ -9,8 +9,9 @@ module ActiveWarehouse #:nodoc
       # department_hierarchy_bridge
       def table_name
         name = self.name.demodulize.underscore
+        set_table_name(name)
         # self.table_name = name
-        # name
+        name
       end
     end
   end

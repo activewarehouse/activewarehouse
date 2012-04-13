@@ -91,8 +91,9 @@ module ActiveWarehouse #:nodoc
       # Example: DateDimension will have a table called date_dimension
       def table_name
         name = self.name.demodulize.underscore
+        set_table_name(name)
         # self.table_name = name
-        # name
+        name
       end
 
       # Convert the given name into a dimension class name
@@ -267,7 +268,7 @@ module ActiveWarehouse #:nodoc
         order = level_orders[child_level.join(' ').to_sym] || self.order || child_level.join(', ')
         child_level = child_level.map{|e| connection.quote_column_name(e)}
 
-        select_sql = "distinct #{child_level.map.join(', ')}"
+        select_sql = "distinct #{child_level.join(', ')}"
         select_sql += ", #{order}" unless order == child_level.to_s
         options = {:select => select_sql, :order => order}
 
