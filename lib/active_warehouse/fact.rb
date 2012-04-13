@@ -114,8 +114,8 @@ module ActiveWarehouse #:nodoc
       # Get the table name. The fact table name is pluralized
       def table_name
         name = self.name.demodulize.underscore.pluralize
-        set_table_name(name)
-        name
+        # self.table_name = name
+        # name
       end
 
       # Get the class name for the specified fact name

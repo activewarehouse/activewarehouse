@@ -14,16 +14,16 @@ module ActiveWarehouse #:nodoc
     include ActiveWarehouse::SlowlyChangingDimension
 
     self.abstract_class = true
-    
+
     after_save :expire_value_tree_cache
-    
+
     class << self
       # Alternate order by, to be used rather than the current level being queried
       attr_accessor :order
-      
+
       # Map of level names to alternate order columns
       attr_reader :level_orders
-      
+
       # Define a column to order by. If this value is specified then it will be
       # used rather than the actual level being queried in the following method
       # calls:
@@ -33,17 +33,17 @@ module ActiveWarehouse #:nodoc
       def set_order(name)
         @order = name
       end
-      
+
       # Define a column to order by for a specific level.
       def set_level_order(level, name)
         level_orders[level] = name
       end
-      
+
       # Get the level orders map
       def level_orders
         @level_orders ||= {}
       end
-      
+
       # Define a named attribute hierarchy in the dimension.
       # 
       # Example: define_hierarchy(:fiscal_calendar, [:fiscal_year, :fiscal_quarter, :fiscal_month])
@@ -58,24 +58,24 @@ module ActiveWarehouse #:nodoc
         hierarchies << name
         hierarchy_levels[name] = levels
       end
-      
+
       # Get the named attribute hierarchy. Returns an array of column names.
       # 
       # Example: hierarchy(:fiscal_calendar) might return [:fiscal_year, :fiscal_quarter, :fiscal_month]
       def hierarchy(name)
         hierarchy_levels[name]
       end
-      
+
       # Get the ordered hierarchy names
       def hierarchies
         @hierarchies ||= []
       end
-      
+
       # Get the hierarchy levels hash
       def hierarchy_levels
         @hierarchy_levels ||= {}
       end
-      
+
       # Return a symbol used when referring to this dimension. The symbol is
       # calculated by demodulizing and underscoring the
       # dimension's class name and then removing the trailing _dimension.
@@ -84,54 +84,54 @@ module ActiveWarehouse #:nodoc
       def sym
         self.name.demodulize.underscore.gsub(/_dimension/, '').to_sym
       end
-      
+
       # Get the table name. By default the table name will be the name of the
       # dimension in singular form.
       #
       # Example: DateDimension will have a table called date_dimension
       def table_name
         name = self.name.demodulize.underscore
-        set_table_name(name)
-        name
+        # self.table_name = name
+        # name
       end
-      
+
       # Convert the given name into a dimension class name
       def class_name(name)
         dimension_name = name.to_s
         dimension_name = "#{dimension_name}_dimension" unless dimension_name =~ /_dimension$/
         dimension_name.classify
       end
-      
+
       # Get a class for the specified named dimension
       def class_for_name(name)
         class_name(name).constantize
       end
-      
+
       # Return the time when the underlying dimension source file was last
       # modified. This is used
       # to determine if a cube structure rebuild is required
       def last_modified
         File.new(__FILE__).mtime
       end
-      
+
       # Get the dimension class for the specified dimension parameter. The
       # dimension parameter may be a class, String or Symbol.
       def to_dimension(dimension)
         return dimension if dimension.is_a?(Class) and dimension.ancestors.include?(Dimension)
         return class_for_name(dimension)
       end
-      
-      
+
+
       # Allows to add SQL conditions when the available values for this dimension
       # Ex: WHERE color IN('blue', 'red')
       def define_dimension_filter(filter)
         @dimension_filter = filter
       end
-      
+
       def dimension_filter
         @dimension_filter ||= ""
       end
-      
+
       # Returns a hash of all of the values at the specified hierarchy level 
       # mapped to the count at that level. For example, given a date dimension
       # with years from 2002 to 2004 and a hierarchy defined with:
@@ -152,7 +152,7 @@ module ActiveWarehouse #:nodoc
         if hierarchy_levels[hierarchy_name].nil?
           raise ArgumentError, "The hierarchy '#{hierarchy_name}' does not exist in your dimension #{name}"
         end
-        
+
         q = nil
         # If the denominator_level is specified and it is not the last element
         # in the hierarchy then do a distinct count. If
@@ -188,7 +188,7 @@ module ActiveWarehouse #:nodoc
         end
         denominators
       end
-      
+
       # Get the foreign key for this dimension which is used in Fact tables.
       # 
       # Example: DateDimension would have a foreign key of date_id
@@ -199,7 +199,7 @@ module ActiveWarehouse #:nodoc
       def foreign_key
         table_name.sub(/_dimension/,'') + '_id'
       end
-      
+
       # Get an array of the available values for a particular hierarchy level
       # For example, given a DateDimension with data from 2002 to 2004:
       #
@@ -208,15 +208,15 @@ module ActiveWarehouse #:nodoc
         level_method = level.to_sym
         level = connection.quote_column_name(level.to_s)
         order = level_orders[level] || self.order || level
-        
+
         # Create the conditions array. Will work with 1.1.6.
         conditions_parts = []
         conditions_values = []
-        
+
         process_dimension_filter(conditions_parts, conditions_values)
-        
+
         conditions = [conditions_parts.join(' AND ')] + conditions_values unless conditions_parts.empty?
-        
+
         options = {:select => "distinct #{order.to_s == level.to_s ? '' : order.to_s+','} #{level}", :order => order, :conditions => conditions}
         values = []
         find(:all, options).each do |dim|
@@ -225,7 +225,7 @@ module ActiveWarehouse #:nodoc
         end
         values.to_a
       end
-      
+
       # Get an array of child values for a particular parent in the hierachy
       # For example, given a DateDimension with data from 2002 to 2004:
       # 
@@ -240,45 +240,45 @@ module ActiveWarehouse #:nodoc
         if levels.length <= parent_values.length
           raise ArgumentError, "The parent_values '#{parent_values.to_yaml}' exceeds the hierarchy depth #{levels.to_yaml}"
         end
-        
+
         child_level = levels[parent_values.length]
-        
-        
+
+
         #return "All #{(levels[parent_values.length + 1 ]).to_s.pluralize.titleize}" if child_level.is_a? Array and child_level.empty?
         return "Totals" if child_level.is_a? Array and child_level.empty?
-        
+
         # Create the conditions array. Will work with 1.1.6.
         conditions_parts = []
         conditions_values = []
-        
+
         parent_values.each_with_index do |value, index|
           next if value.blank?
           conditions_parts << "#{levels[index]} = ?"
           conditions_values << value
         end
-        
+
         process_dimension_filter(conditions_parts, conditions_values)
-        
+
         conditions = [conditions_parts.join(' AND ')] + conditions_values unless conditions_parts.empty?
-        
+
         child_level = [child_level] unless child_level.is_a? Array
-        
+
         child_level_methods = child_level.map{|e|e.to_sym}
         order = level_orders[child_level.join(' ').to_sym] || self.order || child_level.join(', ')
         child_level = child_level.map{|e| connection.quote_column_name(e)}
-        
+
         select_sql = "distinct #{child_level.map.join(', ')}"
         select_sql += ", #{order}" unless order == child_level.to_s
         options = {:select => select_sql, :order => order}
-        
+
         options[:conditions] = conditions unless conditions.nil?
-        
+
         find(:all, options).map do |dim|
           child_level_methods.map{|m| dim.send(m)}.join(' ')
         end.uniq
       end
       alias :available_children_values :available_child_values
-      
+
       # Get a tree of Node objects for all of the values in the specified hierarchy.
       def available_values_tree(hierarchy_name)
         root = value_tree_cache[hierarchy_name]
@@ -300,23 +300,23 @@ module ActiveWarehouse #:nodoc
         end
         root
       end
-      
+
       protected
       # Get the value tree cache
       def value_tree_cache
         @value_tree_cache ||= {}
       end
-      
+
       def process_dimension_filter(conditions_parts, conditions_values)
         if dimension_filter.is_a?(String)
           conditions_parts << dimension_filter unless dimension_filter.blank?
         elsif dimension_filter.is_a?(Array)
-          
+
           unless dimension_filter.empty? 
             conditions_parts << dimension_filter.first
             conditions_values.concat(dimension_filter[1..-1])
           end
-        
+
         elsif dimension_filter.is_a?(Hash)
           dimension_filter.each do |key, value|
             conditions_parts  <<  "#{key} = ?"
@@ -324,7 +324,7 @@ module ActiveWarehouse #:nodoc
           end
         end
       end
-      
+
       class Node#:nodoc:
         attr_reader :value, :children, :parent, :level
 
@@ -351,27 +351,27 @@ module ActiveWarehouse #:nodoc
           @children << child
           child
         end
-        
+
         def optionally_add_child(child_value, level)
           c = child(child_value)
           c = add_child(child_value, level) unless c
           c
         end
       end
-      
+
       public
       # Expire the value tree cache. This should be called if the dimension
       def expire_value_tree_cache
         @value_tree_cache = nil
       end
     end
-    
+
     public
     # Expire the value tree cache
     def expire_value_tree_cache
       self.class.expire_value_tree_cache
     end
-    
+
   end
 end
 
