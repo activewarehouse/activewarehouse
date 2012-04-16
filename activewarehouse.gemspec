@@ -18,6 +18,11 @@ Gem::Specification.new do |s|
   s.summary = %q{Build data warehouses with Rails.}
 
   s.add_dependency(%q<rake>, [">= 0.7.1"])
+  
+  s.add_dependency(%q<rails>, [">= 3.2"])
+  s.add_development_dependency(%q<rspec>, [">= 2.5"])
+  s.add_development_dependency(%q<mysql>, ["= 2.8.1"])
+  
   s.add_dependency(%q<fastercsv>, [">= 1.1.0"])
   s.add_dependency(%q<activesupport>, [">= 1.3.1"])
   s.add_dependency(%q<activerecord>, [">= 1.14.4"])
