@@ -3,7 +3,7 @@ pre_process :truncate, :target => :awunit, :table => table
 
 source :in, {
   :file => "#{table}.csv",
-  :parser => :delimited,
+  :parser => :csv,
   :store_locally => false
 }, 
 [ 

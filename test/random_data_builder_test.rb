@@ -1,4 +1,4 @@
-require File.join(File.dirname(__FILE__), 'test_helper')
+require File.expand_path(File.join(File.dirname(__FILE__), 'test_helper'))
 
 class Smoochy
 end
@@ -164,7 +164,7 @@ class RandomDataBuilderTest < Test::Unit::TestCase
     g = ActiveWarehouse::Builder::FixnumGenerator.new
     column = DateDimension.columns_hash['month_number_in_epoch']
     assert_not_nil column
-    assert Fixnum, g.generate(column).class
+    assert g.generate(column).is_a?(Fixnum)
     1000.times do
       value = g.generate(column)
       assert value >= 0
@@ -177,14 +177,14 @@ class RandomDataBuilderTest < Test::Unit::TestCase
     column = PosRetailSalesTransactionFact.columns_hash['sales_dollar_amount']
     assert_not_nil column
     value = g.generate(column)
-    assert Float, value.class
+    assert_equal Float, value.class
   end
   
   def test_big_decimal_generator
     g = ActiveWarehouse::Builder::BigDecimalGenerator.new
     column = PosRetailSalesTransactionFact.columns_hash['sales_dollar_amount']
     value = g.generate(column)
-    assert BigDecimal, value.class
+    assert value.is_a?(BigDecimal)
   end
   
   def test_string_generator

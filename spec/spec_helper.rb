@@ -1,6 +1,14 @@
 $:.unshift(File.dirname(__FILE__) + '/../test')
-require 'test_init'
-require 'spec'
+
+require 'activewarehouse'
+
+require 'rspec'
+require 'rubygems'
+require 'ruby-debug'
+require 'pry'
+
+connection = (ENV['DB'] || 'native_mysql')
+require "connection/#{connection}/connection"
 
 require 'models/date_dimension'
 require 'models/store_dimension'
@@ -58,6 +66,12 @@ def stub_report
 	@report.stub!(:row_filters).and_return({})
 	@report.stub!(:row_param_prefix).and_return('r')	
 	@report
+end
+
+
+RSpec.configure do |config|
+  config.filter_run :focus => true
+  config.run_all_when_everything_filtered = true
 end
 
 ActiveRecord::Base.logger.level = Logger::DEBUG

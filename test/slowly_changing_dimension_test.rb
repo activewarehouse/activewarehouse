@@ -1,4 +1,4 @@
-require "#{File.dirname(__FILE__)}/test_helper"
+require File.expand_path(File.join(File.dirname(__FILE__), 'test_helper'))
 
 class SlowlyChangingDimensionTest < Test::Unit::TestCase
   # Test class methods
@@ -9,8 +9,8 @@ class SlowlyChangingDimensionTest < Test::Unit::TestCase
   end
   
   def test_find
-    assert 7, ProductDimension.find(:all).length
-    assert 7, ProductDimension.count
+    assert_equal 7, ProductDimension.find(:all).length
+    assert_equal 7, ProductDimension.count
   end
   
   def test_find_with_valid_on

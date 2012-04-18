@@ -32,7 +32,7 @@ module ActiveWarehouse #:nodoc:
     # Get foreign key names that are excluded.
     def excluded_foreign_key_names
       excluded_dimension_relations = prejoined_fields.keys.collect {|k| dimension_relationships[k]}
-      excluded_dimension_relations.collect {|r| r.primary_key_name}
+      excluded_dimension_relations.collect {|r| r.foreign_key}
     end
     
     # Construct the prejoined fact table.
@@ -69,7 +69,7 @@ module ActiveWarehouse #:nodoc:
       prejoined_fields.each_pair do |key, value|
         dimension = dimension_class(key)
         tables_and_joins += "\nJOIN #{dimension.table_name} as #{key}"
-        tables_and_joins += "\n  ON #{table_name}.#{dimension_relationships[key].primary_key_name} = "
+        tables_and_joins += "\n  ON #{table_name}.#{dimension_relationships[key].foreign_key} = "
         tables_and_joins += "#{key}.#{dimension.primary_key}"
         prejoined_columns << value.collect {|v| "#{key}." + v.to_s}
       end

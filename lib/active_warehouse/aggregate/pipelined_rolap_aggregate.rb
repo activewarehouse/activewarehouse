@@ -2,7 +2,7 @@ require 'tempfile'
 
 module ActiveWarehouse #:nodoc
   module Aggregate #:nodoc
-    
+
     # A Pipelined implementation of a ROLAP engine that stores all possible
     # combinations
     # of fact and dimensional values for a specific cube.
@@ -16,9 +16,9 @@ module ActiveWarehouse #:nodoc
     # ABCD -> ABC -> AB -> A -> *all*
     class PipelinedRolapAggregate < NoAggregate
       include RolapCommon
-      
+
       attr_accessor :new_records_only, :new_records_dimension, :new_records_offset, :new_records_record
-      
+
       def sanitize(value)
         result = value
         if value.is_a?(Date) || value.is_a?(DateTime) || value.is_a?(Time)
@@ -26,11 +26,11 @@ module ActiveWarehouse #:nodoc
         end
         connection.quote(result)
       end
-      
+
       def query(*args)
         options = parse_query_args(*args)
         # puts "\n#{self.class.name}.query(#{options.inspect})\n"
-        
+
         # throw an error if there is no column and/or row
         cstage     = options[:cstage] || 0
         rstage     = options[:rstage] || 0
@@ -39,11 +39,11 @@ module ActiveWarehouse #:nodoc
         joins      = options[:joins] || nil
         limit      = options[:limit] || nil
         order      = options[:order] || nil
-        
+
         column_dimension_name = options[:column_dimension_name] || options[:column]
         column_dimension      = fact_class.dimension_class(column_dimension_name)
         column_hierarchy      = cube_class.dimension_hierarchy(column_dimension_name)
-        
+
         if cstage.to_s == 'all'
           current_column_name =  "#{column_dimension_name}_all"
           full_column_name    =  "'all'"
@@ -51,11 +51,11 @@ module ActiveWarehouse #:nodoc
           current_column_name   = column_hierarchy[cstage]
           full_column_name      = "#{column_dimension_name}_#{current_column_name}"
         end
-        
+
         row_dimension_name    = options[:row_dimension_name] || options[:row]
         row_dimension         = fact_class.dimension_class(row_dimension_name)
         row_hierarchy         = cube_class.dimension_hierarchy(row_dimension_name)
-        
+
         if rstage.to_s == 'all'
           current_row_name =  "#{row_dimension_name}_all"
           full_row_name    =  "'all'"
@@ -63,7 +63,7 @@ module ActiveWarehouse #:nodoc
           current_row_name   = row_hierarchy[rstage]
           full_row_name      = "#{row_dimension_name}_#{current_row_name}"
         end
-        
+
         # if they try to query a hierarchy not in this cube, fallback on super (no_aggregate) query method
         ach = options[:column_hierarchy_name]
         cch = cube_class.dimensions_hierarchies[column_dimension_name]
@@ -72,30 +72,30 @@ module ActiveWarehouse #:nodoc
         if ((ach && (ach != cch)) ||(arh && (arh != crh)))
           return super
         end
-        
+
         dimension_levels = {}
         dimension_levels[column_dimension] = (cstage.to_s == 'all') ? 0 : [(cstage + 1), column_hierarchy.count].min
         dimension_levels[row_dimension] =  (rstage.to_s == 'all') ? 0 : [(rstage + 1), row_hierarchy.count].min
-        
+
         # build the where clause
         where_clause = []
-        
+
         #  I don't think I want these
         where_clause << "#{full_column_name} is not null" unless cstage == 'all'
         where_clause << "#{full_row_name} is not null" unless rstage == 'all'
-        
+
         # process all filters
         filters.each do |key, value|
           dimension_name, column = key.split('.')
-          
+
           dim_class     = fact_class.dimension_class(dimension_name.to_sym)
           dim_hierarchy = cube_class.dimension_hierarchy(dimension_name.to_sym)
           dim_level     = dim_hierarchy.index(column.to_sym)
           name          = "#{dimension_name}_#{column}"
-          
+
           if dim_level
             if value
-              
+
               if value.is_a?(Range)
                 where_clause << "(#{name} >= #{sanitize(value.begin)}) AND (#{name} <= #{sanitize(value.end)})"
               elsif value == :not_null
@@ -110,16 +110,16 @@ module ActiveWarehouse #:nodoc
             else
               where_clause << "#{name} IS NOT NULL"
             end
-            
+
             unless [column_dimension_name, row_dimension_name].include?(dimension_name)
               current_level = dimension_levels[dim_class] || 0
               dimension_levels[dim_class] = [current_level, (dim_level + 1)].max
             end
-            
+
           end
-          
+
         end
-        
+
         # default order by row, then column
         unless order
           order_fields = []
@@ -127,7 +127,7 @@ module ActiveWarehouse #:nodoc
           order_fields << "#{full_column_name} DESC" unless cstage == 'all'
           order = order_fields.join(', ')
         end
-        
+
         #  see if the levels are all > for any non-base dim
         use_base = true
         aggregate_options = cube_class.aggregate_options
@@ -139,14 +139,14 @@ module ActiveWarehouse #:nodoc
           l
         }
         # puts "should you use the base for this query? #{use_base}"
-        
+
         if use_base && aggregate_options[:base]
           aggregate_options[:base].query(*args)
         else
           query_table_name = aggregate_rollup_name(aggregate_table_name(options), aggregate_levels)
-          
+
           aggregate_column_names = aggregate_fields.collect do |c|
-            
+
             if c.is_additive? || aggregate_options[:always_use_fact]
               # if strategy is a count or sum, we need to sum it. avg, min, and max run (though avg seems like it will be wrong often)
               "#{[:min,:max,:avg].include?(c.strategy_name) ? c.strategy_name : :sum}(#{c.label_for_table}) AS '#{c.label}'"
@@ -157,9 +157,9 @@ module ActiveWarehouse #:nodoc
               # otherwise, for a nonadditive, non min/max, just return 0 rather than be an incorrect value
               "0 AS '#{c.label}'"
             end
-            
+
           end.compact
-          
+
           # build the SQL query
           sql = ''
           sql << "SELECT\n"
@@ -191,7 +191,7 @@ module ActiveWarehouse #:nodoc
       def populate(options={})
         # puts "PipelinedRolapAggregate::populate #{options.inspect}"
         @new_records_record = nil
-        
+
         # see if the options mean to do new records only
         if(options[:new_records_only])
           # need to know the name of the dimension and field to use to find new only
@@ -201,34 +201,34 @@ module ActiveWarehouse #:nodoc
         else
           @new_records_only = false
         end
-        
+
         create_and_populate_aggregate(options)
       end
-      
+
       def create_and_populate_aggregate(options={})
         # puts "PipelinedRolapAggregate::create_and_populate_aggregate #{options.inspect}"
         base_name = aggregate_table_name(options)
         dimension_fields = aggregate_dimension_fields
         aggregate_levels = dimension_fields.collect{|dim, levels|
           min_level = create_all_level?(dim, options) ? 0 : 1
-          (min_level..levels.count).collect.reverse
+          (min_level..levels.count).to_a.reverse
         }.sequence
-        
+
         # puts "aggregate_levels:\n#{aggregate_levels.inspect}"
-        
+
         # first time through always use the fact table, don't after that if piplining
         options.merge!({:use_fact => true})
 
         find_latest_record(base_name, dimension_fields, aggregate_levels.first, options)
-        
+
         aggregate_levels.each do |levels|
           create_aggregate_table(base_name, dimension_fields, levels, options)
           populate_aggregate_table(base_name, dimension_fields, levels, options)
           options.delete(:use_fact) unless options[:always_use_fact]
         end
-        
+
       end
-      
+
       def create_all_level?(dim, options)
         # see if a base is defined, if not, always make all levels
         # if there is a base, see if this is a dim in the base
@@ -248,18 +248,18 @@ module ActiveWarehouse #:nodoc
       # so a product dimension with no hierarchy specified should by just product_id
       def create_aggregate_table(base_name, dimension_fields, current_levels, options)
         # puts "create_aggregate_table start: #{current_levels.inspect}"
-        
+
         table_name = aggregate_rollup_name(base_name, current_levels)
         table_options = options[:aggregate_table_options] || {}
-        
+
         # # truncate if configured to, otherwise, just pile it on.
         if (options[:truncate] && connection.tables.include?(table_name))
           connection.drop_table(table_name)
         end
-        
+
         unique_index_columns = []
         index_columns = []
-        
+
         if !connection.tables.include?(table_name)
           aggregate_table_options = (options[:aggregate_table_options] || {}).merge({:id => false})
           # puts "create_table: #{table_name}"
@@ -273,7 +273,7 @@ module ActiveWarehouse #:nodoc
                 break if (j >= max_level)
                 column_options = {:null=>false}
                 # unique_index_columns << field.label if (j == (max_level-1))
-                
+
                 # if it is a string or text column, then include the limit with the options
                 if [:string, :text].include?(field.column_type)
                   column_options[:limit] = field.limit
@@ -281,20 +281,20 @@ module ActiveWarehouse #:nodoc
                 elsif [:primary_key, :integer, :float, :decimal, :boolean].include?(field.column_type)
                   column_options[:default] = 0
                 end
-                
+
                 unique_index_columns << field.label
                 index_columns << field.label
                 t.column(field.label, field.column_type, column_options)
               end
             end
-            
+
             aggregate_fields.each do |field|
               af_opts = {}
-              
+
               # By default the aggregate field column type will be a count
               aggregate_type = :integer
               af_opts[:limit] = 8
-              
+
               # But, if type is a decimal, and you do a sum or avg (not a count) then keep it a decimal
               if [:float, :decimal].include?(field.type) && field.strategy_name != :count
                 af_opts[:limit] = field.type == :integer ? 8 : field.limit
@@ -302,30 +302,30 @@ module ActiveWarehouse #:nodoc
                 af_opts[:precision] = field.precision if field.precision
                 aggregate_type = field.column_type
               end
-              
+
               t.column(field.label_for_table, aggregate_type, af_opts)
             end
-            
+
           end
-          
+
           # add index per dimension here (not for aggregate fields)
           index_columns.each{ |dimension_column|
             # puts "making index for: #{table_name} on: #{dimension_column}"
             connection.add_index(table_name, dimension_column, :name => "by_#{dimension_column}")
           }
-          
+
           # Add a unique index for the 
           unless unique_index_columns.empty?
             # puts "making unique index for: #{table_name} on: #{unique_index_columns.inspect}"
             connection.add_index(table_name, unique_index_columns, :unique => true, :name => "by_unique_dims") 
           end
-          
+
           # puts "create_aggregate_table end"
           table_name
         end
-        
+
       end
-      
+
       def find_latest_record(base_name, dimension_fields, current_levels, options={})
         target_rollup = aggregate_rollup_name(base_name, current_levels)
         new_rec_dim_class = self.new_records_only ? fact_class.dimension_class(new_records_dimension) : nil
@@ -336,33 +336,36 @@ module ActiveWarehouse #:nodoc
           find_latest_sql = "SELECT #{new_records_field} AS latest FROM #{target_rollup} GROUP BY #{new_records_field} ORDER BY #{new_records_field} DESC LIMIT #{[(new_records_offset - 1), 0].max}, 1"
           # puts "\n\nfind_latest_sql = #{find_latest_sql}\n\n"
           latest = connection.select_one(find_latest_sql);
-          
+
           if latest
             # puts "found latest: #{latest.inspect}"
             # puts "find latest for dim: #{new_rec_dim_class.name}.where(#{new_records_field.name} => #{latest['latest']}).first"
-            self.new_records_record = new_rec_dim_class.where(new_records_field.name=>latest['latest']).first
+
+            #TODO Need to fix this. not ideal to just cast. Look into mysql2 gem. That might fix this.
+            time_for_search = Time.utc(latest['latest'].to_s)
+            self.new_records_record = new_rec_dim_class.where(new_records_field.name=>time_for_search).first
           else
             self.new_records_record = nil
           end
         end
-        
+
         # puts "self.new_records_record = #{self.new_records_record.inspect}"
-        
+
       end
-      
+
       def populate_aggregate_table(base_name, dimension_fields, current_levels, options={})
         target_rollup = aggregate_rollup_name(base_name, current_levels)
         new_rec_dim_class = self.new_records_only ? fact_class.dimension_class(new_records_dimension) : nil
-        
+
         dimension_column_names = []
         dimension_column_group_names = []
-        
+
         load_dimension_column_names = []
         load_aggregate_column_names = []
-        
+
         where_clause = ""
         delete_sql = nil
-        
+
         if (options[:use_fact])
           from_tables_and_joins = tables_and_joins
         else
@@ -382,7 +385,7 @@ module ActiveWarehouse #:nodoc
               levels.each_with_index do |field, j|
                 break if (j >= max_level)
                 new_rec_value = new_records_record.send(field.name)
-                
+
                 if options[:use_fact]
                   new_rec_fields << "(#{field.table_alias}.#{field.name} >= '#{new_rec_value}')"
                 else
@@ -393,15 +396,15 @@ module ActiveWarehouse #:nodoc
 
               end
               where_clause = "WHERE\t\t(" + new_rec_fields.join(" AND\n\t\t") + ") "
-              
+
               # puts "create new records only condition #{where_clause}"
-              
+
               # no need to delete now that we're using the replace bulk load option, 
               # and have created unique keys on the aggregate to make that work
               unless options[:replace]
                 delete_sql = "DELETE FROM\t#{target_rollup}\nWHERE\t\t(" + delete_fields.join(" AND\n\t\t") + ") "
               end
-              
+
             else
               delete_sql = "TRUNCATE TABLE #{target_rollup}"
             end
@@ -409,12 +412,12 @@ module ActiveWarehouse #:nodoc
 
           levels.each_with_index do |field, j|
             break if (j >= max_level)
-            
+
             field_default = "''"
             if [:primary_key, :integer, :float, :decimal, :boolean].include?(field.column_type)
               field_default = 0
             end
-            
+
             if options[:use_fact]
               dimension_column_names        << "coalesce(#{field.table_alias}.#{field.name}, #{field_default}) as #{field.table_alias}_#{field.name}"
               load_dimension_column_names   << "#{field.table_alias}_#{field.name}"
@@ -467,7 +470,7 @@ module ActiveWarehouse #:nodoc
         sql << "FIELDS TERMINATED BY '#{options[:fields][:delimited_by]}'\n"
         sql << "         ENCLOSED BY '#{options[:fields][:enclosed_by]}'\n"
 
-        
+
         puts sql + "\n--------------------------------------------------------------------------------\n"
 
         connection.transaction do
@@ -481,7 +484,7 @@ module ActiveWarehouse #:nodoc
             puts delete_sql + "\n--------------------------------------------------------------------------------\n"
             connection.execute(delete_sql)
           end
-          
+
           # connection.bulk_load(outfile, target_rollup, options.merge({:replace=>true}))
           options[:columns] = load_dimension_column_names + load_aggregate_column_names
           # puts options.inspect + "\n--------------------------------------------------------------------------------\n"
@@ -515,28 +518,28 @@ module ActiveWarehouse #:nodoc
 
       def temp_file_dir(aggregate_name)
         base_path = if defined?(Rails.root) && Rails.root
-          File.expand_path(Rails.root)
-        else
-          File.expand_path(File.join(File.dirname(__FILE__), "..", "..", ".."))
-        end
+                      File.expand_path(Rails.root)
+                    else
+                      File.expand_path(File.join(File.dirname(__FILE__), "..", "..", ".."))
+                    end
         local_dir = File.join(base_path, "tmp", "active_warehouse", aggregate_name)
-        
+
         # make the dir and make sure it is writable, as mysqld needs access to this
         FileUtils.mkdir_p(local_dir)
         FileUtils.chmod(0777, local_dir)
-        
+
         local_dir
       end
-      
+
       # The table name to use for the rollup
       def aggregate_table_name(options={})
         "#{options[:prefix]}#{cube_class.name.tableize.singularize}_agg"
       end
-      
+
       def aggregate_dimension_fields
         # puts "aggregate_dimension_fields"
         dim_cols = OrderedHash.new
-        
+
         cube_class.dimensions_hierarchies.each do |dimension_name, hierarchy_name|
           dimension_class = fact_class.dimension_class(dimension_name)
           dim_cols[dimension_class] = []
@@ -545,14 +548,14 @@ module ActiveWarehouse #:nodoc
             # puts "level.to_s = #{level.to_s}"
             column = dimension_class.columns_hash[level.to_s]
             dim_cols[dimension_class] << Field.new( dimension_class,
-                                                    column.name,
-                                                    column.type,
-                                                    { 
-                                                      :limit       => column.limit,
-                                                      :scale       => column.scale,
-                                                      :precision   => column.precision,
-                                                      :table_alias => dimension_name 
-                                                    })
+                                                   column.name,
+                                                   column.type,
+                                                   { 
+              :limit       => column.limit,
+              :scale       => column.scale,
+              :precision   => column.precision,
+              :table_alias => dimension_name 
+            })
           end
         end
         dim_cols

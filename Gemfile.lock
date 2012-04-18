@@ -1,19 +1,40 @@
+GIT
+  remote: git://github.com/activewarehouse/activewarehouse-etl.git
+  revision: 3b9b26b005b2223197461eaaae5bb5d40978b475
+  specs:
+    activewarehouse-etl (1.0.0.rc1)
+      activerecord (>= 3.0.0)
+      activesupport (>= 3.0.0)
+      adapter_extensions (>= 0.9.5.rc1)
+      fastercsv (>= 1.2.0)
+      rake (>= 0.8.3)
+
+GIT
+  remote: git://github.com/activewarehouse/adapter_extensions.git
+  revision: 6d201491b3d9efa698b73f5a4ebd5418c12062a1
+  specs:
+    adapter_extensions (1.0.0.rc1)
+      activerecord (>= 3.0.0)
+      activesupport (>= 3.0.0)
+      rake (>= 0.8.3)
+
 PATH
   remote: .
   specs:
-    activewarehouse (0.3.0)
-      actionpack (>= 1.12.5)
-      activerecord (>= 1.14.4)
-      activesupport (>= 1.3.1)
-      adapter_extensions (>= 0.1.0)
+    activewarehouse (0.4.0)
+      actionpack (>= 3.2.0)
+      activerecord (>= 3.2.0)
+      activesupport (>= 3.2.0)
+      adapter_extensions (> 0.9.5)
       fastercsv (>= 1.1.0)
-      rails (>= 3.2)
+      rails (>= 3.2.0)
       rails_sql_views (>= 0.1.0)
-      rake (>= 0.7.1)
+      rake (>= 0.8.3)
 
 GEM
   remote: http://rubygems.org/
   specs:
+    SystemTimer (1.2.3)
     actionmailer (3.2.3)
       actionpack (= 3.2.3)
       mail (~> 2.4.4)
@@ -41,27 +62,44 @@ GEM
     activesupport (3.2.3)
       i18n (~> 0.6)
       multi_json (~> 1.0)
-    adapter_extensions (0.9.5)
-      activerecord (>= 2.1.0)
-      activesupport (>= 2.1.0)
-      rake (>= 0.8.3)
+    archive-tar-minitar (0.5.2)
     arel (3.0.2)
     builder (3.0.0)
+    coderay (1.0.6)
+    columnize (0.3.6)
     diff-lcs (1.1.3)
     erubis (2.7.0)
     fastercsv (1.5.4)
+    ffi (1.0.11)
+    guard (1.0.1)
+      ffi (>= 0.5.0)
+      thor (~> 0.14.6)
+    guard-rspec (0.7.0)
+      guard (>= 0.10.0)
+    guard-test (0.4.3)
+      guard (>= 0.4)
+      test-unit (~> 2.2)
     hike (1.2.1)
     i18n (0.6.0)
     journey (1.0.3)
     json (1.6.6)
+    linecache (0.46)
+      rbx-require-relative (> 0.0.4)
+    linecache19 (0.5.12)
+      ruby_core_source (>= 0.1.4)
     mail (2.4.4)
       i18n (>= 0.4.0)
       mime-types (~> 1.16)
       treetop (~> 1.4.8)
+    method_source (0.7.1)
     mime-types (1.18)
-    multi_json (1.2.0)
+    multi_json (1.3.2)
     mysql (2.8.1)
     polyglot (0.3.3)
+    pry (0.9.8.4)
+      coderay (~> 1.0.5)
+      method_source (~> 0.7.1)
+      slop (< 3, >= 2.4.4)
     rack (1.4.1)
     rack-cache (1.2)
       rack (>= 0.4)
@@ -87,6 +125,7 @@ GEM
       rdoc (~> 3.4)
       thor (~> 0.14.6)
     rake (0.9.2.2)
+    rbx-require-relative (0.0.9)
     rdoc (3.12)
       json (~> 1.4)
     rspec (2.9.0)
@@ -97,21 +136,47 @@ GEM
     rspec-expectations (2.9.1)
       diff-lcs (~> 1.1.3)
     rspec-mocks (2.9.0)
+    ruby-debug (0.10.4)
+      columnize (>= 0.1)
+      ruby-debug-base (~> 0.10.4.0)
+    ruby-debug-base (0.10.4)
+      linecache (>= 0.3)
+    ruby-debug-base19 (0.11.25)
+      columnize (>= 0.3.1)
+      linecache19 (>= 0.5.11)
+      ruby_core_source (>= 0.1.4)
+    ruby-debug19 (0.11.6)
+      columnize (>= 0.3.1)
+      linecache19 (>= 0.5.11)
+      ruby-debug-base19 (>= 0.11.19)
+    ruby_core_source (0.1.5)
+      archive-tar-minitar (>= 0.5.2)
+    slop (2.4.4)
     sprockets (2.1.2)
       hike (~> 1.2)
       rack (~> 1.0)
       tilt (!= 1.3.0, ~> 1.1)
+    test-unit (2.4.8)
     thor (0.14.6)
     tilt (1.3.3)
     treetop (1.4.10)
       polyglot
       polyglot (>= 0.3.1)
-    tzinfo (0.3.32)
+    tzinfo (0.3.33)
 
 PLATFORMS
   ruby
 
 DEPENDENCIES
+  SystemTimer
   activewarehouse!
-  mysql (= 2.8.1)
-  rspec (>= 2.5)
+  activewarehouse-etl!
+  adapter_extensions!
+  guard
+  guard-rspec
+  guard-test
+  mysql
+  pry
+  rspec (>= 2.8.1)
+  ruby-debug
+  ruby-debug19

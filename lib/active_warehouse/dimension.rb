@@ -90,10 +90,7 @@ module ActiveWarehouse #:nodoc
       #
       # Example: DateDimension will have a table called date_dimension
       def table_name
-        name = self.name.demodulize.underscore
-        set_table_name(name)
-        # self.table_name = name
-        name
+        self.name.demodulize.underscore
       end
 
       # Convert the given name into a dimension class name

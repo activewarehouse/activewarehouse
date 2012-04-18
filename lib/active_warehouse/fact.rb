@@ -113,10 +113,7 @@ module ActiveWarehouse #:nodoc
 
       # Get the table name. The fact table name is pluralized
       def table_name
-        name = self.name.demodulize.underscore.pluralize
-        set_table_name(name)
-        # self.table_name = name
-        name
+        self.name.demodulize.underscore.pluralize
       end
 
       # Get the class name for the specified fact name
@@ -157,7 +154,7 @@ module ActiveWarehouse #:nodoc
                                              options[:type], options)
         aggregate_fields << aggregate_field
       rescue Object=>err
-        raise if err.is_a?(ArgumentError)
+        raise if err.is_a?(ArgumentError) || err.is_a?(ActiveRecord::ConnectionNotEstablished)
         logger.error "Error on define_aggregate ignored: #{err.message}"
       end
       alias :aggregate :define_aggregate

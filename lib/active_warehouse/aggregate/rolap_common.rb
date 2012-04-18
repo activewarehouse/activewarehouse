@@ -82,7 +82,7 @@ module ActiveWarehouse
           dimension_table_name = fact_class.dimension_class(dimension_name).table_name
           sql += " LEFT JOIN #{dimension_table_name} as #{dimension_name}"
           sql += " ON #{fact_class.table_name}."
-          sql += "#{fact_class.dimension_relationships[dimension_name].primary_key_name}"
+          sql += "#{fact_class.dimension_relationships[dimension_name].foreign_key}"
           sql += " = #{dimension_name}.id\n"
         end
         sql

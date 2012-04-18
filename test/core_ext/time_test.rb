@@ -1,4 +1,4 @@
-require File.join(File.dirname(__FILE__), '../test_helper')
+require File.expand_path(File.join(File.dirname(__FILE__), '../test_helper'))
 
 class TimeTest < Test::Unit::TestCase
   def test_calendar_year_week

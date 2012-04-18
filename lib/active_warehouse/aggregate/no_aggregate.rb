@@ -4,21 +4,21 @@ module ActiveWarehouse #:nodoc:
   module Aggregate #:nodoc:
     # An aggregate which goes directly to the fact and dimensions to answer questions
     class NoAggregate < Aggregate
-      
+
       # Populate the aggregate (in this case it is a no-op implementation)
       def populate(options={})
         # do nothing
       end
-      
+
       # Query the aggregate
       # def query(column_dimension_name, column_hierarchy_name,
-#                 row_dimension_name, row_hierarchy_name, conditions=nil,
-#                 cstage=0, rstage=0, filters={})
-      
+      #                 row_dimension_name, row_hierarchy_name, conditions=nil,
+      #                 cstage=0, rstage=0, filters={})
+
       # Query the aggregate
       def query(*args)
         options = parse_query_args(*args)
-        
+
         column_dimension_name = options[:column_dimension_name]
         column_hierarchy_name = options[:column_hierarchy_name]
         row_dimension_name = options[:row_dimension_name]
@@ -27,12 +27,12 @@ module ActiveWarehouse #:nodoc:
         cstage = options[:cstage] || 0
         rstage = options[:rstage] || 0
         filters = options[:filters] || {}
-        
+
         column_dimension = fact_class.dimension_class(column_dimension_name)
         column_hierarchy = column_dimension.hierarchy(column_hierarchy_name)
         row_dimension = fact_class.dimension_class(row_dimension_name)
         row_hierarchy = row_dimension.hierarchy(row_hierarchy_name)
-        
+
         used_dimensions = Set.new
         used_dimensions.merge([column_dimension_name, row_dimension_name])
         row_dim_reflection = fact_class.dimension_relationships[row_dimension_name].dependent_dimension_reflections
@@ -49,7 +49,7 @@ module ActiveWarehouse #:nodoc:
             end
           end
         end
-        
+
         # This method assumes at most one dimension is hierarchical dimension
         # in the query params. TODO: need to handle when both row and column
         # are hierarchical dimensions.
@@ -65,7 +65,7 @@ module ActiveWarehouse #:nodoc:
           hierarchical_stage = cstage
           current_column_name = column_hierarchy[0]
         end
-        
+
         if !row_dimension.hierarchical_dimension?
           current_row_name = row_hierarchy[rstage]
         else
@@ -107,18 +107,18 @@ module ActiveWarehouse #:nodoc:
           end
           agg_sql
         }.join(",\n")
-        
+
         current_column_name = [current_column_name] unless current_column_name.is_a? Array
         current_row_name    = [current_row_name]    unless current_row_name.is_a? Array
-        
+
         column_dimension_columns =  current_column_name.map do |column_name|
           "#{column_dimension_name}.#{column_name} as #{column_dimension_name}_1_#{column_name}"
         end
-        
+
         row_dimension_columns =  current_row_name.map do |row_name|
           "#{row_dimension_name}.#{row_name} as #{row_dimension_name}_2_#{row_name}"
         end
-        
+
         sql = ''
         sql += "SELECT\n"
         sql += "  #{(column_dimension_columns + row_dimension_columns).join(", \n  ")},\n"
@@ -166,10 +166,10 @@ module ActiveWarehouse #:nodoc:
         # first add conditions
 
         where_clause = Array(conditions)
-        
+
         # clear emplty filters
         filters.delete_if{|k,v| v.blank?}
-        
+
         # apply filters
         filters.each do |key, value|
           dimension_name, column = key.split('.')
@@ -195,42 +195,42 @@ module ActiveWarehouse #:nodoc:
             sql += "\n WHERE #{hierarchical_dimension.child_foreign_key} = #{hierarchical_stage} AND #{hierarchical_dimension.levels_from_parent} = 1)"
           end
         end
-        
+
         group_by_columns = current_column_name.map do |group_by_column|
           "#{column_dimension_name}.#{group_by_column}"
         end
-        
+
         group_by_rows = current_row_name.map do |group_by_row|
           "#{row_dimension_name}.#{group_by_row}"
         end
-        
+
         sql += "\nGROUP BY\n"
         sql += "  #{(group_by_columns + group_by_rows).join(", \n  ")}"
-        
+
         if options[:order]
           order_by = options[:order]
           order_by = [order_by] if order_by.is_a?(String)
-          order_by.collect!{ |v| cube_class.connection.quote_column_name(order_by) }
+          order_by.collect!{ |v| cube_class.connection.quote_column_name(v) }
           sql += %Q(\nORDER BY\n  #{order_by.join(",\n")})
         end
-        
-        
+
+
         if options[:return] == :sql
           sql
         else
           result = ActiveWarehouse::CubeQueryResult.new(
             cube_class.aggregate_fields(used_dimensions)
           )
-          
-          
-           column_dimension_columns =  current_column_name.map do |column_name|
-              "#{column_dimension_name}_1_#{column_name}"
-            end
 
-            row_dimension_columns =  current_row_name.map do |row_name|
-              "#{row_dimension_name}_2_#{row_name}"
-            end
-          
+
+          column_dimension_columns =  current_column_name.map do |column_name|
+            "#{column_dimension_name}_1_#{column_name}"
+          end
+
+          row_dimension_columns =  current_row_name.map do |row_name|
+            "#{row_dimension_name}_2_#{row_name}"
+          end
+
           cube_class.connection.select_all(sql).each do |row|
             deleted_columns_values = column_dimension_columns.map{|c| row.delete(c)}
             deleted_rows_values = row_dimension_columns.map{|c| row.delete(c)}

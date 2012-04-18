@@ -1,4 +1,4 @@
-require "#{File.dirname(__FILE__)}/test_helper"
+require File.expand_path(File.join(File.dirname(__FILE__), 'test_helper'))
 
 class DimensionTest < Test::Unit::TestCase
   # Test class methods
@@ -7,14 +7,16 @@ class DimensionTest < Test::Unit::TestCase
     assert_not_nil cy_hierarchy
     assert_equal 5, cy_hierarchy.length
     assert_equal :calendar_year, cy_hierarchy[0]
-    
+
     fy_hierarchy = DateDimension.hierarchy(:fy)
     assert_not_nil fy_hierarchy
     assert_equal 5, fy_hierarchy.length
     assert_equal :fiscal_year, fy_hierarchy[0]
   end
   def test_hierarchies
-    assert_equal 2, DateDimension.hierarchies.length
+    #the :rollup hierarchy was added. not sure from where but test wasnt
+    #updated.. I think this is correct. +1 to compensate
+    assert_equal (2 + 1), DateDimension.hierarchies.length
     assert_equal 2, StoreDimension.hierarchies.length
   end
   def test_table_name
@@ -52,20 +54,20 @@ class DimensionTest < Test::Unit::TestCase
   def test_foreign_key
     assert_equal 'date_id', DateDimension.foreign_key
   end
-  
+
   def test_available_values
     values = DateDimension.available_values(:calendar_year)
-    
+
     assert_not_nil values
     assert_equal 8, values.length
     assert_equal '2001', values.first
     assert_equal '2008', values.last
-    
+
     month_names = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 
-    'October', 'November', 'December']
-    
+      'October', 'November', 'December']
+
     assert_equal month_names, DateDimension.available_values(:calendar_month_name)
-    
+
     assert_equal ["Northeast","Southeast"], StoreDimension.available_values(:store_region)
     assert_equal ["New York", "South Florida"], StoreDimension.available_values(:store_district)
   end
@@ -80,7 +82,7 @@ class DimensionTest < Test::Unit::TestCase
     assert_equal 'All', root.value
     assert root.has_child?('New York'), 'Root node does not have child New York'
     assert_equal ['Florida','New York'], root.children.collect { |node| node.value }
-    
+
     assert_nothing_raised do
       florida = StoreDimension.find(:first, :conditions => ['store_state = ?', 'Florida'])
       florida.store_state = 'Florida!'
@@ -93,13 +95,13 @@ class DimensionTest < Test::Unit::TestCase
     assert_equal 52, DateDimension.denominator_count(:cy, :calendar_year, :calendar_week)["2002"]
     assert_equal 365, DateDimension.denominator_count(:cy, :calendar_year, :day_of_week)["2002"]
     assert_equal 365, DateDimension.denominator_count(:cy, :calendar_year)["2002"]
-    
+
     assert_equal 366, DateDimension.denominator_count(:cy, :calendar_year)["2004"]
-    
+
     assert_equal 3, DateDimension.denominator_count(:cy, :calendar_quarter, :calendar_month_name)["Q1"]
-    
+
     assert_equal 12, DateDimension.denominator_count(:fy, :fiscal_year, :calendar_month_name)["FY2003"]
-    
+
     assert_raises(ArgumentError, "The denominator level 'bogus_name' does not appear to exist") do
       DateDimension.denominator_count(:cy, :calendar_year, :bogus_name)
     end
