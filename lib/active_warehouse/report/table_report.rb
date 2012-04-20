@@ -3,21 +3,21 @@ module ActiveWarehouse #:nodoc:
     # A report which is used to represent a tabular report.
     class TableReport
       include AbstractReport
-      
+
       attr_accessor :format
       attr_accessor :link_cell
       attr_accessor :html_params
-      
+
       # Get any format options
       def format
         @format ||= {}
       end
-      
+
       # Set to true if cells should be linked
       def link_cell
         @link_cell ||= false
       end
-      
+
       # Hash of HTML parameters
       def html_params
         @html_params ||= {}
@@ -29,7 +29,7 @@ module ActiveWarehouse #:nodoc:
           options[:with_totals] = true
           options.delete(:sortable_with_totals)
         end
-        
+
         ActiveWarehouse::View::TableView.new(self, params, options)
       end
     end
