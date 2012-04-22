@@ -2,4 +2,5 @@
 pkg
 *.log
 test/database.yml
-source_data
+source_data.rvmrc
+tmp/active_warehouse

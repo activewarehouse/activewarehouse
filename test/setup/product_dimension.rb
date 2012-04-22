@@ -1,4 +1,5 @@
 fields = {
+  :product_id => :integer,
   :product_description => :string,
   :sku_number => :string,
   :brand_description => :string,

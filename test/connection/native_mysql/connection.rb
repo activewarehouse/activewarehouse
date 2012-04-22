@@ -1,7 +1,6 @@
 file = open('activerecord.log', 'w')
 ActiveRecord::Base.logger = Logger.new(file)
-ActiveRecord::Base.logger.level = Logger::FATAL
-ActiveRecord::Base.colorize_logging = false
+ActiveRecord::Base.logger.level = Logger::DEBUG
 
 ActiveRecord::Base.configurations = {
   'awunit' => {
@@ -14,3 +13,5 @@ ActiveRecord::Base.configurations = {
 }
 
 ActiveRecord::Base.establish_connection 'awunit'
+
+ActiveRecord::Base.connection.initialize_schema_migrations_table

@@ -1,4 +1,4 @@
-require "#{File.dirname(__FILE__)}/test_helper"
+require File.expand_path(File.join(File.dirname(__FILE__), 'test_helper'))
 
 class FactTest < Test::Unit::TestCase
   
@@ -101,7 +101,7 @@ class FactTest < Test::Unit::TestCase
     assert_not_nil dimension_relationships
     assert_equal 5, dimension_relationships.size
     dimension_names = dimension_relationships.collect{|k,v| k}.sort{|a,b| a.to_s <=> b.to_s}
-    assert [:customer, :date, :product, :promotion, :store], dimension_names
+    assert_equal [:customer, :date, :product, :promotion, :store], dimension_names
   end
   
   def test_populate

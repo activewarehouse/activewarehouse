@@ -1,10 +1,9 @@
 require 'rake'
 require 'rake/testtask'
-require 'rake/rdoctask'
+require 'rdoc/task'
 require 'rake/gempackagetask'
 require 'rake/contrib/rubyforgepublisher'
-require 'spec/version'
-require 'spec/rake/spectask'
+require "rspec/core/rake_task" 
 
 require File.join(File.dirname(__FILE__), 'lib/active_warehouse', 'version')
 
@@ -27,14 +26,14 @@ Rake::TestTask.new(:test) do |t|
 end
 
 desc "Run all specs"
-Spec::Rake::SpecTask.new do |t|
-  t.spec_files = FileList['spec/**/*_spec.rb']
-  t.spec_opts = ['--options', 'spec/spec.opts']
-  unless ENV['NO_RCOV']
-    t.rcov = true
-    t.rcov_dir = '../doc/output/coverage'
-    t.rcov_opts = ['--exclude', 'spec\/spec,bin\/spec,examples,\/var\/lib\/gems,\/Library\/Ruby,\.autotest']
-  end
+RSpec::Core::RakeTask.new(:core) do |spec|
+  spec.pattern = 'spec/**/*_spec.rb'
+  spec.rspec_opts = ['--backtrace']
+  # unless ENV['NO_RCOV']
+  #   spec.rcov = true
+  #   spec.rcov_dir = '../doc/output/coverage'
+  #   spec.rcov_opts = ['--exclude', 'spec\/spec,bin\/spec,examples,\/var\/lib\/gems,\/Library\/Ruby,\.autotest']
+  # end
 end
 
 namespace :rcov do
@@ -89,6 +88,7 @@ module AW
       s.add_dependency('actionpack',          '>= 2.1.0')
       s.add_dependency('rails_sql_views',     '>= 0.1.0')
       s.add_dependency('adapter_extensions',  '>= 0.1.0')
+      s.add_dependency('builder'          ,   '>= 2.1.2')
 
       s.rdoc_options << '--exclude' << '.'
       s.has_rdoc = false

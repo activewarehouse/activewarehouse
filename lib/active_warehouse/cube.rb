@@ -6,17 +6,17 @@ module ActiveWarehouse
   # to the fact and dimensions to answer queries.
   class Cube
     class << self
-      
+
       # Callback which is invoked when subclasses are created
       def inherited(subclass)
         subclasses << subclass
       end
-      
+
       # Get a list of all known subclasses
       def subclasses
         @subclasses ||= []
       end
-      
+
       # Defines the dimensions that this cube pivots on. If the fact name and
       # cube name are different (for example, if a PurchaseCube does not report
       # on a PurchaseFact) then you *must* declare the <code>reports_on</code>
@@ -28,18 +28,18 @@ module ActiveWarehouse
           case dimension
           when Symbol, String
             dimensions << dimension.to_sym
-            dimensions_hierarchies[dimension.to_sym] = fact_class.dimension_class(dimension).hierarchies
+            dimensions_hierarchies[dimension.to_sym] = fact_class.dimension_class(dimension).hierarchies.first
           when Hash
             dimension_name = dimension.keys.first.to_sym
             dimensions << dimension_name
-            dimensions_hierarchies[dimension_name] = [dimension[dimension_name]].flatten
+            dimensions_hierarchies[dimension_name] = dimension[dimension_name]
           else
             raise ArgumentError, "Each argument to pivot_on must be a symbol, string or Hash"
           end
         end
       end
       alias :pivot_on :pivots_on
-      
+
       # Defines the fact name, without the 'Fact' suffix, that this cube
       # reports on.  For instance, if you have PurchaseFact, you could then
       # call <code>reports_on :purchase</code>.
@@ -51,34 +51,41 @@ module ActiveWarehouse
         @fact_name = fact_name
       end
       alias :report_on :reports_on
-      
+
       # Rebuild the data warehouse.
       def rebuild(options={})
         populate(options)
       end
-      
+
       # Populate the data warehouse.  Delegate to aggregate.populate
       def populate(options={})
-        aggregate.populate
+        aggregate.populate(options.reverse_merge(aggregate_options))
       end
-      
+
       # Get the dimensions that this cube pivots on
       def dimensions
         @dimensions ||= fact_class.dimension_relationships.collect{|k,v| k}
       end
-      
+
       # Get an OrderedHash of each dimension mapped to its hierarchies which 
       # will be included in the cube
       def dimensions_hierarchies
         if @dimensions_hierarchies.nil?
           @dimensions_hierarchies = OrderedHash.new
           dimensions.each do |dimension|
-            @dimensions_hierarchies[dimension] = fact_class.dimension_class(dimension).hierarchies
+            @dimensions_hierarchies[dimension] = fact_class.dimension_class(dimension).hierarchies.first
           end
         end
         @dimensions_hierarchies
       end
-      
+
+      def dimension_hierarchy(dimension_name)
+        hierarchy_name = dimensions_hierarchies[dimension_name]
+        dimension_class = fact_class.dimension_class(dimension_name)
+        levels = hierarchy_name ? dimension_class.hierarchy_levels[hierarchy_name] || [hierarchy_name] : ['id']
+        levels.uniq
+      end
+
       # returns true if this cube pivots on a hierarchical dimension.
       def pivot_on_hierarchical_dimension?
         dimension_classes.each do |dimension|
@@ -86,7 +93,7 @@ module ActiveWarehouse
         end
         return false
       end
-      
+
       # returns the aggregate fields for this cube
       # removing the aggregate fields that are defined in fact class that are
       # related to hierarchical dimension, but the cube doesn't pivot on any
@@ -102,58 +109,58 @@ module ActiveWarehouse
         end
         agg_fields
       end
-      
+
       def calculated_fields
         fact_class.calculated_fields
       end
-      
+
       def fields(dims=[])
         aggregate_fields(dims) + calculated_fields
       end
-      
+
       def field_names(dims=[])
         fields(dims).map { |field| field.name.to_sym }
       end
-      
+
       def fields_for_select(dims=[])
         fields(dims).inject({}) { |select_hash, field| select_hash.update field.label.to_s => field.name.to_sym }
       end
-      
+
       # Get the class name for the specified cube name
       # Example: Regional Sales will become RegionalSalesCube
       def class_name(name)
         cube_name = name.to_s
         cube_name = "#{cube_name}_cube" unless cube_name =~ /_cube$/
-        cube_name.classify
+          cube_name.classify
       end
-      
+
       # Get the aggregated fact class name
       def fact_class_name
         ActiveWarehouse::Fact.class_name(@fact_name || name.sub(/Cube$/,'').underscore.to_sym)
       end
-      
+
       # Get the aggregated fact class instance
       def fact_class
         fact_class_name.constantize
       end
-      
+
       # Get a list of dimension class instances
       def dimension_classes
         dimensions.collect do |dimension_name|
           dimension_class(dimension_name)
         end
       end
-      
+
       # Get the dimension class for the specified dimension name
       def dimension_class(dimension_name)
         fact_class.dimension_relationships[dimension_name.to_sym].class_name.constantize      
       end
-      
+
       # Get the cube logger
       def logger
         @logger ||= Logger.new('cube.log')
       end
-      
+
       # Get the time when the fact or any dimension referenced in this cube 
       # was last modified
       def last_modified
@@ -164,36 +171,45 @@ module ActiveWarehouse
         end
         lm
       end
-      
+
       # The temp directory for storing files during warehouse rebuilds
       attr_accessor :temp_dir
       def temp_dir
         @temp_dir ||= '/tmp'
       end
-      
+
       # Specify the ActiveRecord class to connect through
       # Note: this is a potential directive in a Cube subclass
       attr_accessor :connect_through
       def connect_through
         @connect_through ||= ActiveRecord::Base
       end
-      
+
       # Get an adapter connection
       def connection
         connect_through.connection
       end
-      
+
       # Defaults to NoAggregate strategy.
       def aggregate
         @aggregate ||= ActiveWarehouse::Aggregate::NoAggregate.new(self)
       end
-      
-      def aggregate_class(agg_class)
+
+      def aggregate_class(agg_class, options={})
         @aggregate = agg_class.new(self)
+        @aggregate_options = options
       end
-      
+
+      def aggregate_options
+        @aggregate_options || {}
+      end
+
+      def query(*args)
+        self.aggregate.query(*args)
+      end
+
     end
-    
+
     public
     # Query the cube. The column dimension, column hierarchy, row dimension and
     # row hierarchy are all required.
@@ -202,7 +218,7 @@ module ActiveWarehouse
     # to the where clause. TODO: this may eventually be converted to another
     # query language.
     #
-    # The cstage value represents the current  column drill down stage and 
+    # The cstage value represents the current column drill down stage and 
     # defaults to 0.
     # 
     # The rstage value represents the current row drill down stage and defaults 
@@ -217,19 +233,19 @@ module ActiveWarehouse
     def query(*args)
       self.class.aggregate.query(*args)
     end
-    
+
     # Similar to query, but expects slightly different arguments.  See
     # ActiveWarehouse::Aggregate::Aggregate.query_row_and_column for
     # details.
     def query_row_and_column(*args)
       self.class.aggregate.query_row_and_column(*args)
     end
-    
+
     # Get the database connection (delegates to Cube.connection class method)
     def connection
       self.class.connection
     end
-    
+
   end
-  
+
 end

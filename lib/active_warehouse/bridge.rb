@@ -8,9 +8,7 @@ module ActiveWarehouse #:nodoc
       # Example: DepartmentHierarchyBridge will have a table called
       # department_hierarchy_bridge
       def table_name
-        name = self.name.demodulize.underscore
-        set_table_name(name)
-        name
+        self.name.demodulize.underscore
       end
     end
   end
