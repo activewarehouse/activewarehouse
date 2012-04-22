@@ -4,3 +4,7 @@ pkg
 test/database.yml
 source_data.rvmrc
 tmp/active_warehouse
+.rvmrc
+.bundle
+*.gem
+*.lock
