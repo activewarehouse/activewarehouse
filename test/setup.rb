@@ -11,13 +11,3 @@ require 'setup/salesperson_hierarchy_bridge'
 require 'setup/salesperson_sales_facts'
 require 'setup/sales_products_bridge'
 require 'setup/daily_sales_facts'
-
-ActiveRecord::Base.connection.reconnect!
-puts "Migrating ActiveWarehouse"
-migration_directory = File.join(File.dirname(__FILE__), '../db/migrations')
-ActiveWarehouse::Migrator.migrate(migration_directory, 0)
-ActiveWarehouse::Migrator.migrate(migration_directory, nil)
-
-if ETL::Engine.respond_to?(:init)
-  ETL::Engine.init :config => File.dirname(__FILE__) + '/config/database.yml'
-end
