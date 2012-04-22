@@ -4,11 +4,19 @@ require 'activewarehouse'
 
 require 'rspec'
 require 'rubygems'
-require 'ruby-debug'
-require 'pry'
+#require 'ruby-debug'
+#require 'pry'
 
-connection = (ENV['DB'] || 'native_mysql')
-require "connection/#{connection}/connection"
+raise "Missing required DB environment variable" unless ENV['DB']
+
+database_yml = File.dirname(__FILE__) + '/../test/config/database.yml'
+config = YAML::load(ERB.new(IO.read(database_yml)).result)
+ActiveRecord::Base.configurations = config
+
+file = open('activerecord.log', 'w')
+ActiveRecord::Base.logger = Logger.new(file)
+ActiveRecord::Base.logger.level = Logger::DEBUG
+ActiveRecord::Base.establish_connection 'awunit'
 
 require 'models/date_dimension'
 require 'models/store_dimension'

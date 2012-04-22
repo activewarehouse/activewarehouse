@@ -24,7 +24,8 @@ def declare_gems(rails_version)
   gem 'flexmock'
   gem 'shoulda', '3.0.1'
   gem 'sqlite3'
-
+  gem 'rspec'
+  
   gem 'spreadsheet'
   gem 'nokogiri'
   gem 'fastercsv'
