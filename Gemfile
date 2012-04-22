@@ -12,7 +12,7 @@ gem 'activewarehouse-etl', :git => 'git://github.com/activewarehouse/activewareh
 group :test do
   gem 'mysql'
   gem 'SystemTimer',  :platform => :mri_18
-  gem 'ruby-debug',   :platform => :mri_18
-  gem 'ruby-debug19', :platform => :mri_19, :require => 'ruby-debug'
-  gem 'pry'
+  #gem 'ruby-debug',   :platform => :mri_18
+  #gem 'ruby-debug19', :platform => :mri_19, :require => 'ruby-debug'
+  #gem 'pry'
 end
