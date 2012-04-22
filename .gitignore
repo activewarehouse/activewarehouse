@@ -8,3 +8,4 @@ tmp/active_warehouse
 .bundle
 *.gem
 *.lock
+db/schema.rb
