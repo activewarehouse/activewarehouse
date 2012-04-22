@@ -1,28 +1,11 @@
 $:.unshift(File.dirname(__FILE__) + '/../lib')
-$:.unshift(File.dirname(__FILE__)) unless
-  $:.include?(File.dirname(__FILE__)) || $:.include?(File.expand_path(File.dirname(__FILE__)))
+$:.unshift(File.dirname(__FILE__))
 
-require 'rubygems'
-require 'ruby-debug'
-require 'pry'
-
-# require 'rails_generator'
-# Rails::Generator::Base.append_sources(
-#   Rails::Generator::PathSource.new(:active_warehouse_test, "#{File.dirname(__FILE__)}/../generators/")
-# )
-# 
-# require 'rails'
-# require 'active_support'  
-# require 'active_record'
-# require 'action_view'
 require 'pp'
 require 'test/unit'
-
 require 'activewarehouse'
 
-connection = (ENV['DB'] || 'native_mysql')
-require "connection/#{connection}/connection"
-
+raise "Missing required DB environment variable" unless ENV['DB']
 
 require 'etl'
 ETL::Engine.logger = Logger.new('etl.log')

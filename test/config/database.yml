@@ -1,0 +1,35 @@
+<% raise "ENV['DB'] not specified!" unless ENV['DB'] %>
+
+# a bit hackish - tests would require a refactoring instead
+
+mysql: &mysql
+  host: localhost
+  adapter: mysql
+  database: activewarehouse_test
+  username: root
+  encoding: utf8
+  local_infile: true
+  # the tests would require a rework: disabling casting for now
+  cast: false
+
+mysql2: &mysql2
+  host: localhost
+  adapter: mysql2
+  database: activewarehouse_test
+  username: root
+  encoding: utf8
+  local_infile: true
+  # the tests would require a rework: disabling casting for now
+  cast: false
+
+postgresql: &postgresql
+  adapter: postgresql
+  database: activewarehouse_test
+  username: postgres
+
+awunit:
+  <<: *<%= ENV['DB'] %>
+
+etl_execution:
+  adapter: mysql2
+  database: etl_execution

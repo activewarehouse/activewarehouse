@@ -19,5 +19,5 @@ ActiveWarehouse::Migrator.migrate(migration_directory, 0)
 ActiveWarehouse::Migrator.migrate(migration_directory, nil)
 
 if ETL::Engine.respond_to?(:init)
-  ETL::Engine.init :config => File.dirname(__FILE__) + '/database.yml'
+  ETL::Engine.init :config => File.dirname(__FILE__) + '/config/database.yml'
 end
