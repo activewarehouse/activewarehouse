@@ -28,6 +28,11 @@ module ActiveWarehouse
     def is_semiadditive?
       !field_options[:semiadditive].nil?
     end
+
+    # Returns true if the field is additive, defaults to true if unset
+    def is_additive?
+      field_options[:additive].nil? || field_options[:additive]
+    end
     
     def is_distinct?
       field_options[:distinct] and field_options[:distinct] == true

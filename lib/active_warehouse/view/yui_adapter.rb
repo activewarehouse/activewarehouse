@@ -1,10 +1,11 @@
 module ActiveWarehouse::View
   module YuiAdapter
     def yui_column_definitions(table_view)
-      columns = [{:key => 'row_dimension_key', :label => table_view.row_dimension.hierarchy_level.to_s.humanize.titleize, :sortable => true}]
+      columns = [{:key => 'row_dimension_key', :label => table_view.row_dimension.hierarchy_level_label, :sortable => true}]
       table_view.column_dimension.values.each do |col_dim_value|
         if table_view.column_dimension.has_children?
-          col_label = %Q{<a href="#{url_for(table_view.column_link(col_dim_value))}" onclick="location.href=this.href;" class="yui-dt-link">#{col_dim_value}</a>}
+          col_dim_query = col_dim_value == "Totals" ? "" : col_dim_value
+          col_label = %Q{<a href="#{url_for(table_view.column_link(col_dim_query))}" onclick="location.href=this.href;" class="yui-dt-link">#{col_dim_value}</a>}
         else
           col_label = col_dim_value
         end
@@ -30,7 +31,7 @@ module ActiveWarehouse::View
       data_rows = []
       table_view.data_rows.each do |data_row|
         data = {}
-        data[:row_dimension_key] = link_to_if(table_view.row_dimension.has_children?, data_row.dimension_value, table_view.row_link(data_row.dimension_value))
+        data[:row_dimension_key] = link_to_if(table_view.row_dimension.has_children?, data_row.dimension_value, table_view.row_link(data_row.dimension_value == "Totals" ? "" : data_row.dimension_value))
         data[:row_dimension_label] = data_row.dimension_value
 
         data_row.cells.each_with_index do |cell, index| # aggregated facts
@@ -41,7 +42,7 @@ module ActiveWarehouse::View
           end 
   
           value = link_to_if((table_view.report.link_cell && table_view.column_dimension.has_children? && table_view.row_dimension.has_children?), value, 
-            table_view.cell_link(cell.column_dimension_value,data_row.dimension_value)
+            table_view.cell_link(cell.column_dimension_value, data_row.dimension_value)
           )
           data[cell.key.to_sym] = value
         end

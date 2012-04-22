@@ -1,0 +1,1 @@
+rails generate active_warehouse:date_dimension

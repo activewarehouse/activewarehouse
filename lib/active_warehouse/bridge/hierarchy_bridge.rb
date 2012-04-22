@@ -7,7 +7,7 @@ module ActiveWarehouse #:nodoc:
       end
      
       def levels_from_parent
-        @levels_from_parent ||= "levels_from_parent"
+        @levels_from_parent ||= "num_levels_from_parent"
       end
      
       def set_effective_date(name)
@@ -31,7 +31,7 @@ module ActiveWarehouse #:nodoc:
       end
      
       def top_flag
-        @top_flag ||= "top_flag"
+        @top_flag ||= "is_top"
       end
      
       def set_top_flag_value(value)
@@ -39,7 +39,7 @@ module ActiveWarehouse #:nodoc:
       end
      
       def top_flag_value
-        @top_flag_value ||= 'Y'
+        @top_flag_value ||= true
       end 
     end
   end

@@ -3,10 +3,11 @@ pre_process :truncate, :target => :awunit, :table => table
 
 source :in, {
   :file => "#{table}.csv",
-  :parser => :delimited,
+  :parser => :csv,
   :store_locally => false
 }, 
 [ 
+  :product_id,
   :product_description,
   :sku_number,
   :brand_description,
@@ -27,6 +28,7 @@ source :in, {
   {:name => :expiration_date, :type => :datetime}
 ]
 
+transform :product_id, :type, :type => :integer
 transform :sku_number, :type, :type => :integer
 transform :weight, :type, :type => :integer
 

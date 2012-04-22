@@ -5,10 +5,10 @@ module ActiveWarehouse #:nodoc:
       # Hash of generators where the key is the class and the value is an
       # implementation of AbstractGenerator
       attr_reader :generators
-      
+
       # Hash of names mapped to generators where the name is the column name
       attr_reader :column_generators
-      
+
       # Initialize the random data builder
       def initialize
         @generators = {
@@ -21,7 +21,7 @@ module ActiveWarehouse #:nodoc:
         }
         @column_generators = {}
       end
-      
+
       # Build the data for the specified class. Name may be a Class (which must
       # descend from ActiveWarehouse::Dimension
       # or ActiveWarehouse::Fact), a String or a Symbol. String or Symbol will
@@ -30,9 +30,9 @@ module ActiveWarehouse #:nodoc:
       def build(name, options={})
         case name
         when Class
-          if name.respond_to?(:base_class)
-            return build_dimension(name, options) if name.base_class == ActiveWarehouse::Dimension
-            return build_fact(name, options) if name.base_class == ActiveWarehouse::Fact
+          if name.respond_to?(:ancestors)
+            return build_dimension(name, options) if name.ancestors.include?(ActiveWarehouse::Dimension)
+            return build_fact(name, options) if name.ancestors.include?(ActiveWarehouse::Fact)
           end
           raise "#{name} is a class but does not appear to descend from Fact or Dimension"
         when String
@@ -47,7 +47,7 @@ module ActiveWarehouse #:nodoc:
           raise "Unable to determine what to build"
         end
       end
-      
+
       # Build test dimension data for the specified dimension name.
       #
       # Options:
@@ -75,10 +75,10 @@ module ActiveWarehouse #:nodoc:
           end
           rows << row
         end
-        
+
         rows
       end
-      
+
       # Build test fact data for the specified fact name
       # 
       # Options:
@@ -107,17 +107,17 @@ module ActiveWarehouse #:nodoc:
           end
           fact_class.dimension_relationships.each do |name, reflection|
             # it would be better to get a count of rows from the dimension tables
-            fk_limit = (options[:fk_limit][reflection.primary_key_name] ||
+            fk_limit = (options[:fk_limit][reflection.foreign_key] ||
                         options[:dimensions] || 100) - 1
-            row[reflection.primary_key_name] = rand(fk_limit) + 1
+            row[reflection.foreign_key] = rand(fk_limit) + 1
           end
           rows << row
         end
-        
+
         rows
       end
     end
-    
+
     # Implement this class to provide an generator implementation for a specific class.
     class AbstractGenerator
       # Generate the next value. The column parameter must be an
@@ -127,7 +127,7 @@ module ActiveWarehouse #:nodoc:
         raise "generate method must be implemented by a subclass"
       end
     end
-    
+
     # Basic Date generator
     class DateGenerator < AbstractGenerator
       # Generate a random date value
@@ -143,7 +143,7 @@ module ActiveWarehouse #:nodoc:
         start_date + rand(number_of_days)
       end
     end
-    
+
     # Basic Time generator
     #
     # Options:
@@ -156,7 +156,7 @@ module ActiveWarehouse #:nodoc:
         super(column, options).to_time
       end
     end
-    
+
     # Basic Fixnum generator
     class FixnumGenerator
       # Generate an integer from 0 to options[:max] inclusive
@@ -170,7 +170,7 @@ module ActiveWarehouse #:nodoc:
         rand(options[:max] + (-options[:min])) - options[:min]
       end
     end
-    
+
     # Basic Float generator
     class FloatGenerator
       # Generate a float from 0 to options[:max] inclusive (default 1000)
@@ -182,7 +182,7 @@ module ActiveWarehouse #:nodoc:
         rand * options[:max].to_f
       end
     end
-    
+
     # Basic BigDecimal generator
     class BigDecimalGenerator
       # Generate a big decimal from 0 to options[:max] inclusive (default 1000)
@@ -194,7 +194,7 @@ module ActiveWarehouse #:nodoc:
         BigDecimal.new((rand * options[:max].to_f).to_s) # TODO: need BigDecimal type?
       end
     end
-    
+
     # A basic String generator
     class StringGenerator
       # Initialize the StringGenerator.
@@ -227,7 +227,7 @@ module ActiveWarehouse #:nodoc:
         end
       end
     end
-    
+
     # A basic Boolean generator
     class BooleanGenerator
       # Generate a random boolean

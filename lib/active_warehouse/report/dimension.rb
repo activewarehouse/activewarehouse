@@ -13,7 +13,6 @@ module ActiveWarehouse #:nodoc:
       attr_reader :param_prefix
       
       def initialize(dimension_type, report, params = {})
-        
         @dimension_class = report.send("#{dimension_type}_dimension_class")
         @name = report.send("#{dimension_type}_dimension_name")
         @hierarchy_name = report.send("#{dimension_type}_hierarchy")
@@ -60,6 +59,15 @@ module ActiveWarehouse #:nodoc:
       def available_values
         dimension_class.available_child_values(hierarchy_name, ancestors).map(&:to_s)
       end
+      
+      def hierarchy_level_label
+        if hierarchy_level.is_a?(Array)
+          hierarchy_level.map(&:to_s).map(&:humanize).map(&:titleize).join(' - ')
+        else
+          hierarchy_level.to_s.humanize.titleize
+        end
+      end
+      
     end
   end
 end

@@ -1,4 +1,5 @@
 # Helper module for rendering reports.
+require 'builder'
 module ReportHelper
   # include ActiveWarehouse::Report::YuiAdapter
   
@@ -50,7 +51,7 @@ module ReportHelper
 
       x.tr do |x| # aggregated fact headers
         # Generate the row dimension's header
-        x.th {|x| x << "#{row_dimension.hierarchy_level.to_s.humanize.titleize}"}
+        x.th {|x| x << "#{row_dimension.hierarchy_level_label}"}
         table_view.data_columns.each do |column|
             x.th(column.label)
         end

@@ -11,7 +11,7 @@ module ActiveWarehouse #:nodoc:
       end
       
       # Populate the aggregate
-      def populate
+      def populate(options={})
         create_dwarf_cube(sorted_facts)
       end
       
