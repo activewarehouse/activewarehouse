@@ -1,12 +1,12 @@
-def declare_gems(activerecord_version)
+def declare_gems(rails_version)
   source :rubygems
 
   gem 'adapter_extensions', :git => 'git://github.com/activewarehouse/adapter_extensions.git'
   gem 'activewarehouse-etl', :git => 'git://github.com/activewarehouse/activewarehouse-etl.git'
 
-  gem 'activerecord', activerecord_version
+  gem 'rails', rails_version
 
-  if activerecord_version < '3.1'
+  if rails_version < '3.1'
     gem 'mysql2', '< 0.3'
   else
     # use our own fork for bulk load support until issue fixed:
