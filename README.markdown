@@ -1,33 +1,15 @@
-== ActiveWarehouse
+# ActiveWarehouse
 
 The ActiveWarehouse library provides classes and functions which help with
-building Data Warehouses using Rails. It can be installed either as a plugin
-or as a Gem.
+building Data Warehouses using Rails.
 
-To install as a plugin just use:
+## Installation
 
-  script/plugin install --force svn://rubyforge.org/var/svn/activewarehouse/activewarehouse/trunk
-  
-To get the latest edge version.
+To install ActiveWarehouse, add the gem to your Gemfile:
 
-To install as a Gem, use:
+  gem 'activewarehouse'
 
-  gem install activewarehouse
-
-On *nix you will need to run this command as root or better yet, using sudo.
-
-Next, you will need to freeze or link the Gem to your Rails app. I prefer using
-the gemsonrails project:
-
-  gem install gemsonrails
-
-And then in your Rails app:
-
-  rake gems:link GEM=activewarehouse
-  
-It is possible that freezing the Gem to the Rails app may not work at all times. It is most often best to install as a plugin.
-
-== Generators
+## Generators
 
 ActiveWarehouse comes with several generators
 
@@ -76,24 +58,13 @@ Dimension View:
   on top of an existing dimension.
   Both the class name and the view name are suffixed by "_dimension"
   
-== ETL
+## ETL
 
 The ActiveWarehouse plugin does not directly handle Extract-Transform-Load
 processes, however the ActiveWarehouse ETL gem (installed separately) can help.
 To install it use:
 
   gem install activewarehouse-etl
-
-Once again you should run this command as root or using sudo.
   
 More information on the ETL process can be found at
 http://activewarehouse.rubyforge.org/etl
-
-== Tutorial
-
-A tutorial for ActiveWarehouse is available online at
-http://anthonyeden.com/2006/12/20/activewarehouse-example-with-rails-svn-logs
-(Note that is is out of date.)
-
-You can also get a demo from the ActiveWarehouse subversion repository. Look in
-the SVN_ROOT/demo directory.
