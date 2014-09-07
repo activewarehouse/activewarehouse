@@ -1,142 +1,155 @@
 require File.dirname(__FILE__) + '/../spec_helper'
 
 
-describe ActiveWarehouse::Report::Dimension, ".new with type column" do
-  before(:each) do
-		@report = stub_report
-		@filters = {:year => ["2006","2007"]}
-		@report.should_receive(:column_filters).and_return(@filters)
+describe ActiveWarehouse::Report::Dimension do
+  describe ".new with type column" do
+    let(:report) { stub_report }
+    let(:filters) { {:year => ["2006","2007"]} }
+    let(:dimension) { ActiveWarehouse::Report::Dimension.new(:column, report) }
+
+    before do
+      expect(report).to receive(:column_filters) { filters }
+    end
+
+    it "should match the report's column dimension name" do
+      expect(dimension.name).to eq("event_date_dimension")
+    end
+
+    it "should match the report's column dimension class" do
+      expect(dimension.dimension_class).to eq(EventDateDimension)
+    end
+
+    it "should match the report's column hierarchy" do
+      expect(dimension.hierarchy_name).to eq(:year_hierarchy)
+    end
+
+    it "should match the report's column_constraints"
+
+    it "should match the report's column_filters" do
+      expect(dimension.filters).to eq(filters)
+    end
+
+    it "should match the report's column_stage" do
+      expect(dimension.stage).to eq(1)
+    end
+
+    context "with an overridden column stage" do
+      let(:dimension) { ActiveWarehouse::Report::Dimension.new(:column, report, {:stage => "3"}) }
+
+      it "returns the overridden the default report's column_stage" do
+        expect(dimension.stage).to eq(3)
+      end
+    end
+
+    it "should determine the column hierarchy length" do
+      expect(dimension.hierarchy_length).to eq(3)
+    end
+
+
+    it "should determine the column hierarchy level" do
+      expect(dimension.hierarchy_level).to eq(:month)
+    end
   end
 
-	it "should match the report's column dimension name" do
-	  @dimension = ActiveWarehouse::Report::Dimension.new(:column,@report)
-	  @dimension.name.should == "event_date_dimension"
-	end
+  describe ".query_filters" do
+    let(:report) { stub_report }
+    let(:params) { {:ancestors => {"year" => "2006", "month" => "Jan"}, :stage => 2} }
+    let(:dimension) { ActiveWarehouse::Report::Dimension.column(report, params) }
 
-	
-	it "should match the report's column dimension class" do
-    @dimension = ActiveWarehouse::Report::Dimension.new(:column,@report)
-	  @dimension.dimension_class.should == EventDateDimension
-	end
-	
-	it "should match the report's column hierarchy" do
-    @dimension = ActiveWarehouse::Report::Dimension.new(:column,@report)
-	  @dimension.hierarchy_name.should == :year_hierarchy
-	end
-	
-	it "should match the report's column_constraints" 
-	
-	it "should match the report's column_filters" do
-    @dimension = ActiveWarehouse::Report::Dimension.new(:column,@report)
-	  @dimension.filters.should == @filters
-	end
-	
-	it "should match the report's column_stage" do
-	  @dimension = ActiveWarehouse::Report::Dimension.new(:column,@report)
-		@dimension.stage.should == 1
-	end
-	
-	it "should override the default report's column_stage" do
-	  @dimension = ActiveWarehouse::Report::Dimension.new(:column,@report,{:stage => "3"})
-		@dimension.stage.should == 3
-	end
-	
-	it "should determine the column hierarchy length" do
-	  @dimension = ActiveWarehouse::Report::Dimension.new(:column,@report)
-		@dimension.hierarchy_length.should == 3
-	end
-	
-	
-	it "should determine the column hierarchy level" do
-	  @dimension = ActiveWarehouse::Report::Dimension.new(:column,@report)
-		@dimension.hierarchy_level.should == :month 
-	end
-end
+    it "should return a hash of dimension columns included in the params" do
+      expect(dimension.query_filters.length).to eq(2)
+    end
 
+    it "should contain the dimension_name.year param" do
+      expect(dimension.query_filters["event_date_dimension.year"]).to eq("2006")
+    end
 
-describe ActiveWarehouse::Report::Dimension, ".query_filters" do
-  before(:each) do
-		@report = stub_report
-	  @params = {:ancestors => {"year" => "2006", "month" => "Jan"}, :stage => 2}
-		@dimension = ActiveWarehouse::Report::Dimension.column(@report,@params)		
   end
 
-	it "should return a hash of dimension columns included in the params" do
-		@dimension.query_filters.should have(2).items
-	end
-	
-	it "should contain the dimension_name.year param" do
-	  @dimension.query_filters["event_date_dimension.year"].should == "2006"
-	end
+  describe ".values" do
+    let(:report) { stub_report }
+    let(:all_values) { ["Jan","Feb","Mar","Apr"] }
+    let(:dimension) { ActiveWarehouse::Report::Dimension.column(report) }
 
-end
+    context "with no filters" do
+      before do
+        allow(dimension).to receive(:available_values) { all_values }
+      end
 
-describe ActiveWarehouse::Report::Dimension, ".values" do
-	before(:each) do
-		@report = stub_report
-		@all_values = ["Jan","Feb","Mar","Apr"]
-	end
-	
-  it "should return a list of values from the dimension's current level"  do
-		@dimension = ActiveWarehouse::Report::Dimension.column(@report)	
-		@dimension.should_receive(:available_values).any_number_of_times.and_return(@all_values)
-		@dimension.should have(4).values
-		@dimension.values.should include("Jan")
- 	end
+      it "should return a list of values from the dimension's current level"  do
+        expect(dimension.values.length).to eq(4)
+        expect(dimension.values).to include("Jan")
+      end
+    end
 
-  it "should filter the list of values for any filters set" do
-		filters = {:month => ["Jan", "Feb"]}
-		@report.should_receive(:column_filters).and_return(filters)
-		@dimension = ActiveWarehouse::Report::Dimension.column(@report)	
-		@dimension.should_receive(:available_values).any_number_of_times.and_return(@all_values)
-		@dimension.should have(2).values
-		@dimension.values.should include("Jan")	
-		@dimension.values.should_not include("Mar")	
-  	
+    context "when filtered" do
+      let(:filters) { {:month => ["Jan", "Feb"]} }
+
+      before do
+        expect(report).to receive(:column_filters) { filters }
+        allow(dimension).to receive(:available_values) { all_values }
+      end
+
+      it "should filter the list of values for any filters set" do 
+        expect(dimension.values.length).to eq(2)
+        expect(dimension.values).to include("Jan")	
+        expect(dimension.values).to_not include("Mar")	
+      end
+    end
   end
-end
 
-describe ActiveWarehouse::Report::Dimension, ".ancestors" do
-	
-	before(:each) do
-		@report = stub_report
-		@report.stub!(:column_stage).and_return(nil)
-	end
-		
-  it "should return an array of string values for the current level's parents" do
-		params = {:ancestors => {"year" => "2006", "month" => "Jan", "day" => "uh-oh"}, :stage => 2}
-    @dimension = ActiveWarehouse::Report::Dimension.column(@report, params)	
-		@dimension.should have(2).ancestors
-		@dimension.ancestors.should include("Jan")
-		@dimension.ancestors.should_not include("uh-oh")
-  end
-end
+  describe ".ancestors" do
 
-describe ActiveWarehouse::Report::Dimension, ".has_children?" do
-	
-	before(:each) do
-		@report = stub_report
-		@report.stub!(:column_stage).and_return(0)
-		@report.stub!(:row_stage).and_return(0)		
-	end
-		
-	it "should return true when there are hierarchy levels and no stage set" do
-		params = {}	
-    @dimension = ActiveWarehouse::Report::Dimension.row(@report, params)		
-		@dimension.should have_children
-  end	
-		
-  it "should return true when there are hierarchy levels beneath the current stage" do
-		params = {:ancestors => {"year" => "2006"}, :stage => 1}	
-    @dimension = ActiveWarehouse::Report::Dimension.column(@report, params)		
-		@dimension.should have_children
+    let(:report) { stub_report }
+    let(:params) { {:ancestors => {"year" => "2006", "month" => "Jan", "day" => "uh-oh"}, :stage => 2} }
+    let(:dimension) { ActiveWarehouse::Report::Dimension.column(report, params) }
+
+    before do
+      allow(report).to receive(:column_stage) { nil }
+    end
+
+    it "should return an array of string values for the current level's parents" do
+      expect(dimension.ancestors.length).to eq(2)
+      expect(dimension.ancestors).to include("Jan")
+      expect(dimension.ancestors).to_not include("uh-oh")
+    end
   end
-		
-  it "should return false when there are no hierarchy levels beneath the current stage" do
-		params = {:ancestors => {"year" => "2006", "month" => "Jan"}, :stage => 2}	
-    @dimension = ActiveWarehouse::Report::Dimension.row(@report, params)		
-		@dimension.should_not have_children
+
+  describe ".has_children?" do
+
+    let(:report) { stub_report }
+
+    before do
+      allow(report).to receive(:column_stage) { 0 }
+      allow(report).to receive(:row_stage) { 0 }		
+    end
+
+    context "when there are hierarchy levels and no stage set" do
+      let(:params) { {} }
+
+      it "should return true" do
+        dimension = ActiveWarehouse::Report::Dimension.row(report, params)		
+        expect(dimension).to have_children
+      end
+    end
+
+    context "when there are hierarchy levels beneath the current stage" do
+      let(:params) { {:ancestors => {"year" => "2006"}, :stage => 1} }
+      it "should return true" do
+        dimension = ActiveWarehouse::Report::Dimension.column(report, params)		
+        expect(dimension).to have_children
+      end
+    end
+
+    context "when there are no hierarchy levels beneath the current stage" do
+      let(:params) { {:ancestors => {"year" => "2006", "month" => "Jan"}, :stage => 2} }
+      it "should return false" do
+        dimension = ActiveWarehouse::Report::Dimension.row(@report, params)		
+        expect(dimension).to_not have_children
+      end
+    end
   end
+
 end
 
 

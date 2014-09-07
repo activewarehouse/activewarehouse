@@ -7,16 +7,16 @@ require 'rubygems'
 #require 'ruby-debug'
 #require 'pry'
 
-raise "Missing required DB environment variable" unless ENV['DB']
+#raise "Missing required DB environment variable" unless ENV['DB']
 
 database_yml = File.dirname(__FILE__) + '/../test/config/database.yml'
-config = YAML::load(ERB.new(IO.read(database_yml)).result)
-ActiveRecord::Base.configurations = config
+database_config = YAML::load(ERB.new(IO.read(database_yml)).result)
+ActiveRecord::Base.configurations = database_config
 
 file = open('activerecord.log', 'w')
 ActiveRecord::Base.logger = Logger.new(file)
 ActiveRecord::Base.logger.level = Logger::DEBUG
-ActiveRecord::Base.establish_connection 'awunit'
+ActiveRecord::Base.establish_connection :awunit
 
 require 'models/date_dimension'
 require 'models/store_dimension'
@@ -42,39 +42,39 @@ require 'models/daily_sales_fact'
 require 'models/daily_sales_cube'
 
 
-# def stub_report
-#   @report = mock('report')
-#   @cube = mock('cube')
-#   query_result = mock('query_result')
-#   @cube.stub!(:query_row_and_column).and_return(query_result)
-#   eval("class CustomerFact < ActiveWarehouse::Fact;  end")
-#   eval("class EventDateDimension < ActiveWarehouse::Dimension; define_hierarchy :year_hierarchy, [:year, :month, :day]; end")
+def stub_report
+  @report = double('report')
+  @cube = double('cube')
+  query_result = double('query_result')
+  allow(@cube).to receive(:query_row_and_column) { query_result }
+  eval("class CustomerFact < ActiveWarehouse::Fact;  end")
+  eval("class EventDateDimension < ActiveWarehouse::Dimension; define_hierarchy :year_hierarchy, [:year, :month, :day]; end")
 
-#   @field1 = mock('field1')
-#   @field1.stub!(:label).and_return("Field 1")
-#   @field1.stub!(:name).and_return("field1")
-#   CustomerFact.stub!(:field_for_name).and_return(@field1)
-#   @report.stub!(:fact_class).and_return(CustomerFact)
-#   @report.stub!(:fact_attributes).and_return([:field1,:field2])
+  @field1 = double('field1')
+  allow(@field1).to receive(:label) { "Field 1" }
+  allow(@field1).to receive(:name) { "field1" }
+  allow(CustomerFact).to receive(:field_for_name) { @field1 }
+  allow(@report).to receive(:fact_class) { CustomerFact }
+  allow(@report).to receive(:fact_attributes) { [:field1,:field2] }
 
-#   @report.stub!(:cube).and_return(@cube)
-#   @report.stub!(:conditions).and_return({})
-#   @report.stub!(:column_dimension_class).and_return(EventDateDimension)
-#   @report.stub!(:column_dimension_name).and_return("event_date_dimension")
-#   @report.stub!(:column_hierarchy).and_return(:year_hierarchy)
-#   @report.stub!(:column_stage).and_return(1)
-#   @report.stub!(:column_filters).and_return({})
-#   @report.stub!(:column_param_prefix).and_return('c')
-#   @report.stub!(:format).and_return({})
-#   @report.stub!(:html_params).and_return({})			
-#   @report.stub!(:row_dimension_class).and_return(EventDateDimension)
-#   @report.stub!(:row_dimension_name).and_return("event_date_dimension")
-#   @report.stub!(:row_hierarchy).and_return(:year_hierarchy)
-#   @report.stub!(:row_stage).and_return(1)
-#   @report.stub!(:row_filters).and_return({})
-#   @report.stub!(:row_param_prefix).and_return('r')	
-#   @report
-# end
+  allow(@report).to receive(:cube) { @cube }
+  allow(@report).to receive(:conditions) { {} }
+  allow(@report).to receive(:column_dimension_class) { EventDateDimension }
+  allow(@report).to receive(:column_dimension_name) { "event_date_dimension" }
+  allow(@report).to receive(:column_hierarchy) { :year_hierarchy }
+  allow(@report).to receive(:column_stage) { 1 }
+  allow(@report).to receive(:column_filters) { {} }
+  allow(@report).to receive(:column_param_prefix) { 'c' }
+  allow(@report).to receive(:format) { {} }
+  allow(@report).to receive(:html_params) { {} }			
+  allow(@report).to receive(:row_dimension_class) { EventDateDimension }
+  allow(@report).to receive(:row_dimension_name) { "event_date_dimension" }
+  allow(@report).to receive(:row_hierarchy) { :year_hierarchy }
+  allow(@report).to receive(:row_stage) { 1 }
+  allow(@report).to receive(:row_filters) { {} }
+  allow(@report).to receive(:row_param_prefix) { 'r' }	
+  @report
+end
 
 
 RSpec.configure do |config|

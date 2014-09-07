@@ -30,7 +30,7 @@ def system!(cmd)
   raise "Command failed!" unless system(cmd)
 end
 
-require 'tasks/standalone_migrations'
+#require 'tasks/standalone_migrations'
 
 # experimental tasks to reproduce the Travis behaviour locally
 namespace :ci do

@@ -1,22 +1,24 @@
 require File.dirname(__FILE__) + '/../spec_helper'
 
-describe ActiveWarehouse::Report::DataColumn, ".new" do
+describe ActiveWarehouse::Report::DataColumn do
+  
+  describe ".new" do
 
-	before(:each) do
-		@fact_attribute = mock('fact attribute')
-		@column = ActiveWarehouse::Report::DataColumn.new('MyLabel','my_value', @fact_attribute)
-	end
+    let(:fact_attribute) { double('fact attribute') }
+    let(:column) { described_class.new('MyLabel','my_value', fact_attribute) }
 
-	it "should have a column dimension value" do
-		@column.dimension_value.should == 'my_value'
-	end
-	
-	it "should have a fact attribute" do
-	  @column.fact_attribute.should == @fact_attribute
-	end
-	
-	it "should have a label" do
-	  @column.label.should == "MyLabel"
-	end
+    it "should have a column dimension value" do
+      expect(column.dimension_value).to eq('my_value')
+    end
+
+    it "should have a fact attribute" do
+      expect(column.fact_attribute).to eq(fact_attribute)
+    end
+
+    it "should have a label" do
+      expect(column.label).to eq("MyLabel")
+    end
+
+  end
 
 end

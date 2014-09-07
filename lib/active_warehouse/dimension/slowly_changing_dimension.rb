@@ -46,7 +46,7 @@ module ActiveWarehouse #:nodoc:
           self.effective_date_attribute = options[:effective_date_attribute] || :effective_date
           self.expiration_date_attribute = options[:expiration_date_attribute] || :expiration_date
 
-          default_scope :conditions =>{self.latest_version_attribute => true}
+          #default_scope :conditions =>{self.latest_version_attribute => true}
           
           scope :valid_on, lambda { |valid_on|
             where("? between #{effective_date_attribute} and #{expiration_date_attribute}", valid_on)
