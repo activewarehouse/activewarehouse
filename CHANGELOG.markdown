@@ -1,30 +1,10 @@
-0.1.0 - Dec 19, 2006
-* Initial release
- 
-0.2.0 - Feb 18, 2007
-* Implemented basic hierarchical dimension functionality for variable depth 
-  hierarchies
-* Implemented dimensional views for dimensional role-playing
-* Implemented support for type 2 slowly changing dimensions (courtesy of Seth 
-  Ladd)
-* Added generators for bridges and dimensional views to support the 
-  functionality above
-* Added unit tests for generators
-* Significant performance improvements in how aggregate data is loaded into the
-  cube
-** Only get the calculated_fields and calculate_field_options once, outside of
-   the aggregate loop.
-** Condition added to the aggregate lookup query to only retrieve current stage
-* Added :select to Dimension.available_values which makes it work on SQL Server
-  (courtesy of Wenyi Zhou)
-* Changed require_gem to gem and added alias to allow for older versions of
-  rubygems
-* Implemented initial random data generator with unit tests
-* Added support for specifying a dimension-wide or level-by-level override of
-  ordering. Useful for dates, for example when the month names should not be 
-  ordered by name but should be ordered by the calendar order for the months
-  
-0.3.0 - May 13, 2007
+## 0.4.0 -
+
+* Applied patch from Giao Phan for date dimension builder.
+* Updated for Rails 2.x, no longer compatible for Railsversions less than 2.x
+
+## 0.3.0 - May 13, 2007
+
 * Updated docs.
 * Fixed bug in report helper so that dimension ordering override now works as 
   expected.
@@ -56,6 +36,30 @@
 * DateDimension is now implemented as a class extending from Dimension.
 * Test cases modified to reflect ETL changes as well as new functionality.
 
-0.4.0 -
-* Applied patch from Giao Phan for date dimension builder.
-* Updated for Rails 2.x, no longer compatible for Railsversions less than 2.x
+## 0.2.0 - Feb 18, 2007
+
+* Implemented basic hierarchical dimension functionality for variable depth 
+  hierarchies
+* Implemented dimensional views for dimensional role-playing
+* Implemented support for type 2 slowly changing dimensions (courtesy of Seth 
+  Ladd)
+* Added generators for bridges and dimensional views to support the 
+  functionality above
+* Added unit tests for generators
+* Significant performance improvements in how aggregate data is loaded into the
+  cube
+  * Only get the calculated_fields and calculate_field_options once, outside of
+   the aggregate loop.
+  * Condition added to the aggregate lookup query to only retrieve current stage
+* Added :select to Dimension.available_values which makes it work on SQL Server
+  (courtesy of Wenyi Zhou)
+* Changed require_gem to gem and added alias to allow for older versions of
+  rubygems
+* Implemented initial random data generator with unit tests
+* Added support for specifying a dimension-wide or level-by-level override of
+  ordering. Useful for dates, for example when the month names should not be 
+  ordered by name but should be ordered by the calendar order for the months
+
+## 0.1.0 - Dec 19, 2006
+
+* Initial release
