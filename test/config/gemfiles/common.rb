@@ -1,5 +1,5 @@
 def declare_gems(rails_version)
-  source :rubygems
+  source "https://rubygems.org"
 
   gem 'adapter_extensions', :git => 'git://github.com/activewarehouse/adapter_extensions.git'
   gem 'activewarehouse-etl', :git => 'git://github.com/activewarehouse/activewarehouse-etl.git'
