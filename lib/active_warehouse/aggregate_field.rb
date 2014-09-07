@@ -44,7 +44,7 @@ module ActiveWarehouse
     
     # returns the Dimension that this semiadditive fact is over
     def semiadditive_over
-      Dimension.to_dimension(field_options[:semiadditive])
+      Dimension.to_dimension(field_options[:semiadditive]) if is_semiadditive?
     end
     
     # overrides Field.label, prepending the aggregation strategy name to label
