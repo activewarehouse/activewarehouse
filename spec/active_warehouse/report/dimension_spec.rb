@@ -1,5 +1,4 @@
-require File.dirname(__FILE__) + '/../spec_helper'
-
+require 'spec_helper'
 
 describe ActiveWarehouse::Report::Dimension do
   describe ".new with type column" do
@@ -144,7 +143,7 @@ describe ActiveWarehouse::Report::Dimension do
     context "when there are no hierarchy levels beneath the current stage" do
       let(:params) { {:ancestors => {"year" => "2006", "month" => "Jan"}, :stage => 2} }
       it "should return false" do
-        dimension = ActiveWarehouse::Report::Dimension.row(@report, params)		
+        dimension = ActiveWarehouse::Report::Dimension.row(report, params)		
         expect(dimension).to_not have_children
       end
     end
