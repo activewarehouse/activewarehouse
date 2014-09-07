@@ -43,37 +43,37 @@ require 'models/daily_sales_cube'
 
 
 def stub_report
-  @report = double('report')
-  @cube = double('cube')
+  report = double('report')
+  cube = double('cube')
   query_result = double('query_result')
-  allow(@cube).to receive(:query_row_and_column) { query_result }
+  allow(cube).to receive(:query_row_and_column) { query_result }
   eval("class CustomerFact < ActiveWarehouse::Fact;  end")
   eval("class EventDateDimension < ActiveWarehouse::Dimension; define_hierarchy :year_hierarchy, [:year, :month, :day]; end")
 
-  @field1 = double('field1')
-  allow(@field1).to receive(:label) { "Field 1" }
-  allow(@field1).to receive(:name) { "field1" }
-  allow(CustomerFact).to receive(:field_for_name) { @field1 }
-  allow(@report).to receive(:fact_class) { CustomerFact }
-  allow(@report).to receive(:fact_attributes) { [:field1,:field2] }
+  field1 = double('field1')
+  allow(field1).to receive(:label) { "Field 1" }
+  allow(field1).to receive(:name) { "field1" }
+  allow(CustomerFact).to receive(:field_for_name) { field1 }
+  allow(report).to receive(:fact_class) { CustomerFact }
+  allow(report).to receive(:fact_attributes) { [:field1,:field2] }
 
-  allow(@report).to receive(:cube) { @cube }
-  allow(@report).to receive(:conditions) { {} }
-  allow(@report).to receive(:column_dimension_class) { EventDateDimension }
-  allow(@report).to receive(:column_dimension_name) { "event_date_dimension" }
-  allow(@report).to receive(:column_hierarchy) { :year_hierarchy }
-  allow(@report).to receive(:column_stage) { 1 }
-  allow(@report).to receive(:column_filters) { {} }
-  allow(@report).to receive(:column_param_prefix) { 'c' }
-  allow(@report).to receive(:format) { {} }
-  allow(@report).to receive(:html_params) { {} }			
-  allow(@report).to receive(:row_dimension_class) { EventDateDimension }
-  allow(@report).to receive(:row_dimension_name) { "event_date_dimension" }
-  allow(@report).to receive(:row_hierarchy) { :year_hierarchy }
-  allow(@report).to receive(:row_stage) { 1 }
-  allow(@report).to receive(:row_filters) { {} }
-  allow(@report).to receive(:row_param_prefix) { 'r' }	
-  @report
+  allow(report).to receive(:cube) { cube }
+  allow(report).to receive(:conditions) { {} }
+  allow(report).to receive(:column_dimension_class) { EventDateDimension }
+  allow(report).to receive(:column_dimension_name) { "event_date_dimension" }
+  allow(report).to receive(:column_hierarchy) { :year_hierarchy }
+  allow(report).to receive(:column_stage) { 1 }
+  allow(report).to receive(:column_filters) { {} }
+  allow(report).to receive(:column_param_prefix) { 'c' }
+  allow(report).to receive(:format) { {} }
+  allow(report).to receive(:html_params) { {} }
+  allow(report).to receive(:row_dimension_class) { EventDateDimension }
+  allow(report).to receive(:row_dimension_name) { "event_date_dimension" }
+  allow(report).to receive(:row_hierarchy) { :year_hierarchy }
+  allow(report).to receive(:row_stage) { 1 }
+  allow(report).to receive(:row_filters) { {} }
+  allow(report).to receive(:row_param_prefix) { 'r' }
+  report
 end
 
 
